@@ -19,10 +19,10 @@ My codes and notebooks for the anlaysis of Sentinel1 L1B-XSP IMACS parameter mad
 - containing python scripts required for the IMACS analysis described below.
 
 ## IMACS analysis Notebooks 
-- `CMOD_NRCS.ipynb` : Notebook making a plot of NRCS vs Wind direction for a specified wind speed and an incidence using **CMOD5** model
-- `Macs_analysis_S1__upgrade_plots.ipynb` : Notebook of the IMACS analysis on S1A and S1B separately. Containing, among other things, the iso-density plots of IMACS vs Wind direction for different wind speed ranges and incidences ranges over the 3 subswaths.
+- `CMOD_NRCS.ipynb` : Notebook making a plot of NRCS vs Wind direction for a specified wind speed and incidence using **CMOD5** model.
+- `Macs_analysis_S1__upgrade_plots.ipynb` : Notebook of the IMACS analysis on S1A and S1B data separately. Containing, among other things, the iso-density plots of IMACS vs Wind direction for different wind speed ranges and incidences ranges over the 3 subswaths.
 - `MACS_2nd_analysis_S1b.ipynb` : Another IMACS analysis focusing on filtering the data around a GMF of IMACS (not completely finished).
-- `S1A_S1B_IMACS_mean_analysis.ipynb` : Notebook of the IMACS analysis wich make an sensor inter-comparison before merging S1B and S1A data to make a complementary analysis of IMACS.
+- `S1A_S1B_IMACS_mean_analysis.ipynb` : Notebook of the IMACS analysis wich make a sensor inter-comparison before merging S1B and S1A data to moke some complementary analysis of IMACS.
 - `map_sar_IMACS_slice.ipynb` : Notebook wich make a map of IMACS (with the Sentinel1 acquisition geometry) over a slice in the Mediterranean sea. 
 
 
