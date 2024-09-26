@@ -24,11 +24,11 @@ class L1CConverter:
         self.selected_vars = selected_vars
         self.burst_type = burst_type
 
-        
+
     def converter(self, save=True):
         """
         Convert the l1c subswath file to a dataframe.
-        
+
         Parameters
         - save (boolean): If True the converted file is saved to a CSV. If False, the converted dataframe is returned. Defaults to True.
 
@@ -40,14 +40,14 @@ class L1CConverter:
         res = self.get_dataframe(ds)
 
         if res is not None:
-            
+
             if save:
                 self.save_dataframe(res)
-                
+
             else:
                 return res
 
-    
+
     def get_dataframe(self, ds):
         """
         Convert Sentinel-1 Level-1C sub-swath data to a pandas DataFrame.
@@ -62,7 +62,7 @@ class L1CConverter:
         if not set(self.selected_vars).issubset(ds.keys()):
             print(f'All Variables not found in {self.path}')
             return None
-            
+
         ds = ds.drop_vars('crs')
         ds = ds[self.selected_vars]
         df_res = ds.drop_dims(['k_gp', 'phi_hf']).squeeze().to_dataframe().reset_index(drop=True).drop(columns=['spatial_ref', 'sample', 'line', 'pol'], errors='ignore')
@@ -75,8 +75,8 @@ class L1CConverter:
 
         df_res = df_res.assign(file_path=self.path)
         return df_res
-    
-        
+
+
     def save_dataframe(self, df):
         """
         Save the converted data to a CSV file.
@@ -86,7 +86,7 @@ class L1CConverter:
 
         The CSV file is saved with the same base name as the corresponding NetCDF file.
         """
-        
+
         safe_name, file_name = self.path.split(os.sep)[-2:]
         savepath = os.path.join(self.root_savepath, safe_name, self.burst_type, file_name).replace('.nc', '.csv')
 
