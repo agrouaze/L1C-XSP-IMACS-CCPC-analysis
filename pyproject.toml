@@ -10,7 +10,7 @@ dependencies = [
   "matplotlib",
   "seaborn",
   "cartopy",
-  "aar" # https://gitlab.ifremer.fr/lops-wave/angles-antenna-referential
+  #"aar" # deactivate while not Pypi available https://gitlab.ifremer.fr/lops-wave/angles-antenna-referential
 ]
 keywords = [
   "numpy",
