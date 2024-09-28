@@ -8,7 +8,9 @@ dependencies = [
   "numpy",
   "pandas",
   "matplotlib",
-  "seaborn"
+  "seaborn",
+  "cartopy",
+  "aar" # https://gitlab.ifremer.fr/lops-wave/angles-antenna-referential
 ]
 keywords = [
   "numpy",

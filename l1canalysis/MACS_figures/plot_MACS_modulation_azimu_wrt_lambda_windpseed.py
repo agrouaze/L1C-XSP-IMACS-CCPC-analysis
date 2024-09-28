@@ -11,7 +11,6 @@ import numpy as np
 import logging
 from aar.compute_angles import azimuth_direction,wind_direction_from_U_and_V
 from matplotlib import pyplot as plt
-# import seaborn as sns
 
 def mean_curve_calcandplot(ax,az_wdir, variable_tested, label,lw=2):
     """

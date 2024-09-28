@@ -3,8 +3,6 @@ Developped for the version 4.1 of l1c processor.
 """
 
 import os
-import glob
-import pandas as pd
 import xarray as xr
 
 

@@ -1,60 +1,35 @@
-import os
-import glob
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-import sys
 import seaborn as sns
 import time
 import logging
-import python_scripts.find_mean_inc_angle
-from python_scripts.find_mean_inc_angle import find_mean_incidence_angle
-from python_scripts.wind_inversion_functions import cmod5n_forward
 
 ### To make maps with Cartopy using local data
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from cartopy.io.shapereader import Reader
+# import cartopy.crs as ccrs
+# import cartopy.feature as cfeature
+# from cartopy.io.shapereader import Reader
 
 # TODO: introduce the future package name below
-from plot_MACS_modulation_azimu_wrt_lambda_windpseed import (
-    load_and_merge_dataframes,
-    add_ancillary_variables,
+from l1canalysis.MACS_figures.plot_MACS_modulation_azimu_wrt_lambda_windpseed import (
     mean_curve_calcandplot,
     mean_curve_calc2,
     mean_curve_calc_180_180
 )
-
+from l1canalysis.utils import mean_iangle_iw1,mean_iangle_iw2,mean_iangle_iw3
+from l1canalysis.utils import conf,sat_colors
 # Define local data path
 # local_shapefile_dir = '/home1/datahome/ljessel/Cartopy/'  # Remplacez par le chemin vers vos fichiers décompressés
-local_shapefile_dir = "/home/datawork-cersat-public/cache/project/sarwave/tools/landmask/cartopy/shapefiles/natural_earth/physical"
-shapefile_path = os.path.join(local_shapefile_dir, "ne_110m_coastline.shp")
+# local_shapefile_dir = "/home/datawork-cersat-public/cache/project/sarwave/tools/landmask/cartopy/shapefiles/natural_earth/physical"
+# local_shapefile_dir = conf['local_shapefile_dir']
+# shapefile_path = os.path.join(local_shapefile_dir, "ne_110m_coastline.shp")
+#
+# # Read the local data by using Reader
+# coastline = Reader(shapefile_path).geometries()
+# coastline_feature = cfeature.ShapelyFeature(coastline, ccrs.PlateCarree())
 
-# Read the local data by using Reader
-coastline = Reader(shapefile_path).geometries()
-coastline_feature = cfeature.ShapelyFeature(coastline, ccrs.PlateCarree())
 
-sat_colors = {"S1A": "blue", "S1B": "red"}
-mean_iangle = np.array(
-    [
-        31.64091048,
-        32.83585645,
-        34.03080242,
-        35.15106426,
-        36.79411497,
-        37.83969269,
-        38.88527042,
-        39.93084814,
-        40.97642586,
-        42.17137183,
-        43.14226543,
-        44.03847491,
-        44.93468438,
-    ]
-)  # hard coded, since Alexis Lucas did somthing over complicated to find the incidence angles
-mean_iangle_iw1 = mean_iangle[:4]
-mean_iangle_iw2 = mean_iangle[4:9]
-mean_iangle_iw3 = mean_iangle[9:]
+
 
 
 def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind):
@@ -73,7 +48,6 @@ def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind):
         & (df["incidence"].values > 39)
         & (df["incidence"].values < 41)
     )  # selection of a range of 2 m/s around 15m/s wind speed and a range of 1° around 40° of incidence
-    # print("mask", mask_verif.size, mask_verif.sum())
     NRCS_verif = df["sigma0_dB_filt"][mask_verif]
     if burstkind == "intraburst":
         ccpc_Re_verif = df["CCPC_filt_Re"][mask_verif]
@@ -84,8 +58,6 @@ def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind):
     az_wdir_verif = (
         df["wdir_az"].loc[ccpc_Re_verif.index].values
     )  # selection of the az_wdir corresponding to the range
-    # print(az_wdir_verif, az_wdir_verif.shape)
-    # print(ccpc_Re_verif.values, ccpc_Re_verif.values.shape)
     # plot figure
     fig = plt.figure(figsize=(8, 6))
     gs = fig.add_gridspec(
@@ -798,7 +770,6 @@ def hist2d_ccpc_re_wsp_wdir(df):
     wsp_bins = np.arange(0,25,0.7)
     wdir_bins = np.arange(0,360,10)
     plt.figure(figsize=(7,6),dpi=120)
-    print(df['CCPC_filt_Re'].values)
     points = (df['Wspeed'].values,df['wdir_az'].values)
     values = df['CCPC_filt_Re'].values
     grid_x,grid_y = np.meshgrid(wsp_bins,wdir_bins)
