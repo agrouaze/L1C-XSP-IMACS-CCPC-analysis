@@ -9,7 +9,13 @@ import xarray as xr
 
 
 class L1CConverter:
-    def __init__(self, path_l1c_subswath, root_savepath=None, selected_vars=['sigma0', 'incidence', 'macs_Im','macs_Re'], burst_type='intraburst'):
+    def __init__(
+        self,
+        path_l1c_subswath,
+        root_savepath=None,
+        selected_vars=["sigma0", "incidence", "macs_Im", "macs_Re"],
+        burst_type="intraburst",
+    ):
         """
         Initialize the L1C_Converter.
 
@@ -23,7 +29,6 @@ class L1CConverter:
         self.root_savepath = root_savepath
         self.selected_vars = selected_vars
         self.burst_type = burst_type
-
 
     def converter(self, save=True):
         """
@@ -47,7 +52,6 @@ class L1CConverter:
             else:
                 return res
 
-
     def get_dataframe(self, ds):
         """
         Convert Sentinel-1 Level-1C sub-swath data to a pandas DataFrame.
@@ -60,22 +64,47 @@ class L1CConverter:
         - pd.DataFrame : Returns a pandas DataFrame containing the extracted information from the input dataset.
         """
         if not set(self.selected_vars).issubset(ds.keys()):
-            print(f'All Variables not found in {self.path}')
+            print(f"All Variables not found in {self.path}")
             return None
 
-        ds = ds.drop_vars('crs')
+        ds = ds.drop_vars("crs")
         ds = ds[self.selected_vars]
-        df_res = ds.drop_dims(['k_gp', 'phi_hf']).squeeze().to_dataframe().reset_index(drop=True).drop(columns=['spatial_ref', 'sample', 'line', 'pol'], errors='ignore')
+        df_res = (
+            ds.drop_dims(["k_gp", "phi_hf"])
+            .squeeze()
+            .to_dataframe()
+            .reset_index(drop=True)
+            .drop(columns=["spatial_ref", "sample", "line", "pol"], errors="ignore")
+        )
 
-        for _phi_hf in ds['phi_hf'].values:
-            for _k_gp in ds['k_gp'].values:
-                df = ds['cwave_params'].sel(k_gp=_k_gp, phi_hf=_phi_hf).to_dataframe().reset_index(drop=True).drop(columns=['k_gp', 'phi_hf', 'spatial_ref', 'sample', 'line', 'pol'], errors='ignore')
-                df = df.rename(columns={'cwave_params': f'cwave_params_k_gp={_k_gp}_and_phi_hf={_phi_hf}'})
-                df_res = df_res.merge(df, on=['longitude', 'latitude'])
+        for _phi_hf in ds["phi_hf"].values:
+            for _k_gp in ds["k_gp"].values:
+                df = (
+                    ds["cwave_params"]
+                    .sel(k_gp=_k_gp, phi_hf=_phi_hf)
+                    .to_dataframe()
+                    .reset_index(drop=True)
+                    .drop(
+                        columns=[
+                            "k_gp",
+                            "phi_hf",
+                            "spatial_ref",
+                            "sample",
+                            "line",
+                            "pol",
+                        ],
+                        errors="ignore",
+                    )
+                )
+                df = df.rename(
+                    columns={
+                        "cwave_params": f"cwave_params_k_gp={_k_gp}_and_phi_hf={_phi_hf}"
+                    }
+                )
+                df_res = df_res.merge(df, on=["longitude", "latitude"])
 
         df_res = df_res.assign(file_path=self.path)
         return df_res
-
 
     def save_dataframe(self, df):
         """
@@ -88,7 +117,9 @@ class L1CConverter:
         """
 
         safe_name, file_name = self.path.split(os.sep)[-2:]
-        savepath = os.path.join(self.root_savepath, safe_name, self.burst_type, file_name).replace('.nc', '.csv')
+        savepath = os.path.join(
+            self.root_savepath, safe_name, self.burst_type, file_name
+        ).replace(".nc", ".csv")
 
         os.makedirs(os.path.dirname(savepath), exist_ok=True)
         df.to_csv(savepath, index=False)
