@@ -9,6 +9,7 @@ import pandas as pd
 import time
 import numpy as np
 import logging
+from aar.compute_angles import azimuth_direction,wind_direction_from_U_and_V
 from matplotlib import pyplot as plt
 # import seaborn as sns
 
@@ -348,19 +349,30 @@ def load_and_merge_dataframes(base_path,pola_acqui="1SDV",pola_chosen='VV',burst
 
 def add_ancillary_variables(df_s1a,df_s1b):
     """
-    add ancillary wind informations
+    add ancillary wind information
 
     :param df_s1a:
     :param df_s1b:
     :return:
     """
-    dataset = {}
-    u = df_s1b['U10']
-    v = df_s1b['V10']
-    df_s1b['Wspeed'] = np.sqrt(u**2 + v**2)                                # wind speed norm
-    df_s1b['wdir'] = np.mod(180+(180/np.pi)*np.arctan2(u,v),360)           # wind direction taken from the north
-    df_s1b['wdir_az'] = ((df_s1b['wdir']-df_s1b['ground_heading']-90)%360) # wind direction brought back to the antenna's frame of reference
-    df_s1b['sigma0_dB_filt'] = 10*np.log10(df_s1b['sigma0_filt'])          # sigma0 filtered in dB
+    dataset = {'S1A':df_s1a,'S1B':df_s1b}
+    for sar_unit in dataset:
+        u = dataset[sar_unit]['U10']
+        v = dataset[sar_unit]['V10']
+        dataset[sar_unit]['Wspeed'] = np.sqrt(u**2 + v**2)                                # wind speed norm
+        dataset[sar_unit]['wdir'] = wind_direction_from_U_and_V(u_component=u,v_component=v)
+        dataset[sar_unit]['wdir_az'] = azimuth_direction(ground_heading_angle=dataset[sar_unit]['ground_heading'],
+                                                         u_component=u,v_component=v)
+        # df_s1b['wdir'] = np.mod(180+(180/np.pi)*np.arctan2(u,v),360)           # wind direction taken from the north
+        # # dataset[sar_unit]['wdir'] = np.mod((180 / np.pi) * np.arctan2(-u, -v), 360) # correction chatgpt
+        # dataset[sar_unit]['wdir_az'] = ((dataset[sar_unit]['wdir']-dataset[sar_unit]['ground_heading']-90)%360) # wind direction brought back to the antenna's frame of reference
+        # print('-90°')
+        # dataset[sar_unit]['wdir_az'] = dataset[sar_unit]['wdir_az'] * -1.
+        print('aar version')
+        # df_s1b['wdir_az'] = ((df_s1b['wdir'] - df_s1b[
+        #     'ground_heading'] ) % 360)  # test agrouaze
+        # print('0°') #+90 tested +0 tested -270 tested
+        dataset[sar_unit]['sigma0_dB_filt'] = 10*np.log10(dataset[sar_unit]['sigma0_filt'])          # sigma0 filtered in dB
 
 
     ### Selection of the variables of interest for the MACS analysis
@@ -373,13 +385,13 @@ def add_ancillary_variables(df_s1a,df_s1b):
     # descending_s1b = heading_s1b[abs(heading_s1b) > 150]
     # ascending_s1b = heading_s1b[abs(heading_s1b) < 30]
 
-    ### Computation of others variables from the ones that are in the csv
-    u = df_s1a['U10']
-    v = df_s1a['V10']
-    df_s1a['Wspeed'] = np.sqrt(u**2 + v**2)                                # wind speed norm
-    df_s1a['wdir'] = np.mod(180+(180/np.pi)*np.arctan2(u,v),360)           # wind direction taken from the north
-    df_s1a['wdir_az'] = ((df_s1a['wdir']-df_s1a['ground_heading']-90)%360) # wind direction brought back to the antenna's frame of reference
-    df_s1a['sigma0_dB_filt'] = 10*np.log10(df_s1a['sigma0_filt'])          # sigma0 filtered in dB
+    # ### Computation of others variables from the ones that are in the csv
+    # u = df_s1a['U10']
+    # v = df_s1a['V10']
+    # df_s1a['Wspeed'] = np.sqrt(u**2 + v**2)                                # wind speed norm
+    # df_s1a['wdir'] = np.mod(180+(180/np.pi)*np.arctan2(u,v),360)           # wind direction taken from the north
+    # df_s1a['wdir_az'] = ((df_s1a['wdir']-df_s1a['ground_heading']-90)%360) # wind direction brought back to the antenna's frame of reference
+    # df_s1a['sigma0_dB_filt'] = 10*np.log10(df_s1a['sigma0_filt'])          # sigma0 filtered in dB
 
 
     ### Selection of the variables of interest for the MACS/wind analysis
@@ -391,6 +403,9 @@ def add_ancillary_variables(df_s1a,df_s1b):
     # heading_s1a = df_s1a['ground_heading']
     # descending_s1a = heading_s1a[abs(heading_s1a) > 150]
     # ascending_s1a = heading_s1a[abs(heading_s1a) < 30]
-    return df_s1a,df_s1b
+    return dataset['S1A'],dataset['S1B']
+
+
+
 
 
