@@ -134,46 +134,47 @@ def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind):
     ax.set_xlabel("Azimuthal wind direction [°]")
     ax.set_ylabel("CCPC -Real part - vv - [$m^{-6}$]")
 
-    ax.hlines(0, -70, 420, color="black", lw=1)
-    ax.vlines(
-        [90, 270],
-        -ymax,
-        ymax,
-        color="teal",
-        label="crosswind",
-        linestyles="dashdot",
-        alpha=0.6,
-        lw=2.5,
-    )
-    ax.vlines(
-        180,
-        -ymax,
-        ymax,
-        color="black",
-        label="downwind",
-        linestyles="dashdot",
-        alpha=0.6,
-        lw=2.5,
-    )
-    ax.vlines(
-        [1, 359.9],
-        -ymax,
-        ymax,
-        color="maroon",
-        label="upwind",
-        linestyles="dashdot",
-        alpha=0.6,
-        lw=3,
-    )
-    ax.hlines(0, -70, 420, color="black", lw=1)
-    ax.set_xticks([0, 90, 180, 270, 360])
-    ax.set_xlim(xmin, xmax)
+    # ax.vlines(
+    #     [90, 270],
+    #     -ymax,
+    #     ymax,
+    #     color="teal",
+    #     label="crosswind",
+    #     linestyles="dashdot",
+    #     alpha=0.6,
+    #     lw=2.5,
+    # )
+    # ax.vlines(
+    #     180,
+    #     -ymax,
+    #     ymax,
+    #     color="black",
+    #     label="downwind",
+    #     linestyles="dashdot",
+    #     alpha=0.6,
+    #     lw=2.5,
+    # )
+    # ax.vlines(
+    #     [1, 359.9],
+    #     -ymax,
+    #     ymax,
+    #     color="maroon",
+    #     label="upwind",
+    #     linestyles="dashdot",
+    #     alpha=0.6,
+    #     lw=3,
+    # )
+    ax.axhline(0, color="black", lw=1)
+    # ax.set_xticks([0, 90, 180, 270, 360])
+    ax.set_xticks([-180, -90,0, 90, 180])
+    # ax.set_xlim(xmin, xmax)
     ax.set_ylim(-ymax, ymax)
     ax.grid(ls="--")
 
     ## Histogramms
     binwidth = 1
-    x_bins = np.arange(0, 360 + binwidth, binwidth * 5)
+    # x_bins = np.arange(0, 360 + binwidth, binwidth * 5)
+    x_bins = np.arange(-180, 180 + binwidth, binwidth * 5)
     ax_histx.hist(az_wdir_verif, bins=x_bins, color=color)
     ax_histx.grid(ls="--")
     y_bins = np.arange(-ymax, ymax, binwidth * ymax ** 2)
@@ -240,7 +241,7 @@ def convert_angles(angles):
     angles = np.where(angles > 180, angles - 360, angles)
     return angles
 
-def longepe_azi_figure(df, burstkind="intraburst"):
+def longepe_azi_figure_asc_desc(df, burstkind="intraburst"):
     """
 
     :param df: S1A+S1B
@@ -252,7 +253,7 @@ def longepe_azi_figure(df, burstkind="intraburst"):
     xmin = -180
     xmax = 180
     nb_pts = {}
-    windpeeds = np.arange(2, 14, 2)
+    windpeeds = np.arange(2, 16, 2)
     windspeed_colors = ['b','g','r','c','m','y','k']
     incidences = [34.5,38.5,42.5]
     variables = {
@@ -298,54 +299,58 @@ def longepe_azi_figure(df, burstkind="intraburst"):
                     ccpc_sel_asc.index]
                 az_wdir_sel_desc = df["wdir_az"].loc[
                     ccpc_sel_desc.index]
-                az_wdir_sel_asc = convert_angles(az_wdir_sel_asc)
-                az_wdir_sel_desc = convert_angles(az_wdir_sel_desc)
+                az_wdir_sel_asc0 = convert_angles(az_wdir_sel_asc)
+                az_wdir_sel_asc = pd.Series(az_wdir_sel_asc0,index=az_wdir_sel_asc.index)
+                az_wdir_sel_desc0 = convert_angles(az_wdir_sel_desc)
+                az_wdir_sel_desc = pd.Series(az_wdir_sel_desc0, index=az_wdir_sel_desc.index)
                 assert (az_wdir_sel_asc>180).sum()==0
-                # ## Dataframe boundaries extension for ascending data
+                # ## Dataframe boundaries extension for ascending data (PART I DONT UNDERSTAND , WORKING WITHOUT)
                 # # Create a new dataframe to duplicate data from the left (300° --> 0°)
-                # Imacs_before = Imacs_sel_asc[az_wdir_sel_asc >= 300]
+                # ccpc_before = ccpc_sel_asc[az_wdir_sel_asc >= 300]
                 # az_wdir_before = az_wdir_sel_asc[az_wdir_sel_asc >= 300]
                 # az_wdir_before -= 360  # modify the azimutal wind direction to get into the [-60 - 0] range
-                #
-                # # Create a new dataframe to duplicate data from the right (360 --> 60)
-                # Imacs_after = Imacs_sel_asc[az_wdir_sel_asc <= 60]
+                # #
+                # # # Create a new dataframe to duplicate data from the right (360 --> 60)
+                # ccpc_after = ccpc_sel_asc[az_wdir_sel_asc <= 60]
                 # az_wdir_after = az_wdir_sel_asc[az_wdir_sel_asc <= 60]
                 # az_wdir_after += 360  # modify the azimutal wind direction to get into the [360 - 60] range
-                #
-                # # Add the two duplicated datas to the original dataframe
-                # imacs_ext_s1a_asc = pd.concat(
-                #     [Imacs_before, Imacs_sel_asc, Imacs_after]
+                # #
+                # # # Add the two duplicated datas to the original dataframe
+                # ccpc_ext_asc = pd.concat(
+                #     [ccpc_before, ccpc_sel_asc, ccpc_after]
                 # )
-                # az_wdir_ext_s1a_asc = pd.concat(
+                # az_wdir_ext_asc = pd.concat(
                 #     [az_wdir_before, az_wdir_sel_asc, az_wdir_after]
                 # )
-                #
-                # ## Dataframe boundaries extension for descending data
-                # # Create a new dataframe to duplicate data from the left (300° --> 0°)
-                # Imacs_before = Imacs_sel_desc[az_wdir_sel_desc >= 300]
+                # #
+                # # ## Dataframe boundaries extension for descending data
+                # # # Create a new dataframe to duplicate data from the left (300° --> 0°)
+                # ccpc_before = ccpc_sel_desc[az_wdir_sel_desc >= 300]
                 # az_wdir_before = az_wdir_sel_desc[az_wdir_sel_desc >= 300]
                 # az_wdir_before -= 360  # modify the azimutal wind direction to get into the [-60 - 0] range
-                #
-                # # Create a new dataframe to duplicate data from the right (360 --> 60)
-                # Imacs_after = Imacs_sel_desc[az_wdir_sel_desc <= 60]
+                # #
+                # # # Create a new dataframe to duplicate data from the right (360 --> 60)
+                # ccpc_after = ccpc_sel_desc[az_wdir_sel_desc <= 60]
                 # az_wdir_after = az_wdir_sel_desc[az_wdir_sel_desc <= 60]
                 # az_wdir_after += 360  # modify the azimutal wind direction to get into the [360 - 60] range
-                #
-                # # Add the two duplicated datas to the original dataframe
-                # imacs_ext_s1a_desc = pd.concat(
-                #     [Imacs_before, Imacs_sel_desc, Imacs_after]
+                # #
+                # # # Add the two duplicated datas to the original dataframe
+                # ccpc_ext_desc = pd.concat(
+                #     [ccpc_before, ccpc_sel_desc, ccpc_after]
                 # )
-                # az_wdir_ext_s1a_desc = pd.concat(
+                # az_wdir_ext_desc = pd.concat(
                 #     [az_wdir_before, az_wdir_sel_desc, az_wdir_after]
                 # )
-
                 ### mean curve calculation
                 # bin_centers, Imacs_mean = mean_curve_calc2(
                 #     az_wdir_ext_s1a_asc, imacs_ext_s1a_asc
                 # )
                 bin_centers, ccpc_mean,_ = mean_curve_calc_180_180(
                     az_wdir_sel_asc, ccpc_sel_asc
-                )
+                ) # agrouaze #1
+                # bin_centers, ccpc_mean,_ = mean_curve_calc_180_180(
+                #     az_wdir_ext_asc, ccpc_ext_asc
+                # ) # agrouaze #2
                 ax[i][j].plot(
                     bin_centers,
                     ccpc_mean,
@@ -435,7 +440,115 @@ def longepe_azi_figure(df, burstkind="intraburst"):
     fig.show()
 
 
+def longepe_azi_figure(df, burstkind="intraburst"):
+    """
 
+    :param df: S1A+S1B
+    :param burstkind:
+    :return:
+    """
+    start_time = time.time()
+
+    xmin = -180
+    xmax = 180
+    nb_pts = {}
+    windpeeds = np.arange(2, 16, 2)
+    windspeed_colors = ['b','g','r','c','m','y','k']
+    incidences = [34.5,38.5,42.5]
+    variables = {
+        'Amplitude': {'ymin':0,'ymax':0.16}
+        ,'Re': {'ymin':-0.15,'ymax':0.15}
+        ,'Im': {'ymin':-0.07,'ymax':0.07}
+    }
+    # chosen_mean_iangle = mean_iangle_subswaths[subswath]
+    fig, ax = plt.subplots(len(variables), len(incidences), figsize=(3*8, 3*6))
+    if burstkind == "intraburst":
+
+        varname_re = "CCPC_filt_Re"
+        varname_im = "CCPC_filt_Im"
+    elif burstkind == "interburst":
+        varname_re = "CCPC_overlap_filt_Re"
+        varname_im = "CCPC_overlap_filt_Im"
+    values_ccpc = {'Amplitude': abs(df[varname_re]+1j*df[varname_im]), # TO BE CHECKED wrt paper
+                   'Re':df[varname_re],
+                   'Im':df[varname_im],}
+    delta_ws = 2 #m/s
+    delta_inc = 1 # degree
+    for i,var_x in enumerate(variables):
+
+        for j in range(len(incidences)):  # "loop over the incidence angles
+            for wwi,wscenter in enumerate(windpeeds):
+                wnd_mask = (df["Wspeed"] > wscenter-delta_ws) & (df["Wspeed"] < wscenter+delta_ws)
+                inc_mask = (df["incidence"] > incidences[j]-delta_inc) & (df["incidence"] < incidences[j]+delta_inc)
+                # Selection of data
+                ccpc_selection = values_ccpc[var_x][wnd_mask & inc_mask].dropna()
+
+                nb_pts = len(ccpc_selection)
+
+                az_wdir_sel = df["wdir_az"].loc[
+                    ccpc_selection.index]
+                az_wdir_sel0 = convert_angles(az_wdir_sel)
+                az_wdir_sel = pd.Series(az_wdir_sel0,index=az_wdir_sel.index)
+
+
+                bin_centers, ccpc_mean,_ = mean_curve_calc_180_180(
+                    az_wdir_sel, ccpc_selection
+                ) # agrouaze #1
+
+                ax[i][j].plot(
+                    bin_centers,
+                    ccpc_mean,
+                    color=windspeed_colors[wwi],
+                    label="%1.1f $\pm$%i m/s asc"%(wscenter,delta_ws),
+                    linestyle="-",
+                    lw=2,
+                )  # plot the mean curve
+
+
+            ax[i][j].set_xticks([-180, -90, 0, 90, 180])
+            ax[i][j].tick_params(axis="x", labelsize=15)
+            ax[i][j].tick_params(axis="y", labelsize=15)
+            ax[i][j].set_xlim(xmin, xmax)
+            ax[i][j].set_ylim(variables[var_x]['ymin'], variables[var_x]['ymax'])
+            if i == len(incidences) - 1:
+                ax[i][j].set_xlabel("Azimuthal wind direction [°]", fontsize=15)
+            else:
+                ax[i][j].set_xlabel("")
+            if j == 0:
+                ax[i][j].set_ylabel("CCPC %s - vv - []"%var_x, fontsize=15)
+            else:
+                ax[i][j].set_ylabel("")
+            ax[i][j].grid(linestyle="--", color="gray", alpha=0.9)
+            ax[i][j].legend(fontsize=8, loc="upper right")
+            txt_str = (
+                    "pts num: %d\nincidence : %.1f $\pm$ %i°"
+                    % (
+                        nb_pts,
+                        incidences[j],delta_inc,
+                    )
+            )
+            props = dict(boxstyle="square", facecolor="white")
+            ax[i][j].text(
+                0.03,
+                0.97,
+                txt_str,
+                transform=ax[i][j].transAxes,
+                fontsize=12,
+                verticalalignment="top",
+                bbox=props,
+            )
+    fig.suptitle(
+        "S1A+B CCPC versus azimuth wind direction | Processing B07 | %s"
+        % (burstkind),
+        y=0.93,
+        fontsize=25,
+    )
+
+    end_time = time.time()
+    print("Ploting time :", end_time - start_time, "s")
+
+    # fig.savefig('/home1/datahome/ljessel/Plots/MACS_analysis/IW_SLC_L1C_B07/intra/comp_S1AB/IMACS_comp_s1ab_ascdesc_iw1_inter.png')
+    fig.show()
 
 
 def asc_desc_ccpc_azi_modulation(
@@ -650,3 +763,56 @@ def asc_desc_ccpc_azi_modulation(
 
     # fig.savefig('/home1/datahome/ljessel/Plots/MACS_analysis/IW_SLC_L1C_B07/intra/comp_S1AB/IMACS_comp_s1ab_ascdesc_iw1_inter.png')
     fig.show()
+
+def hist2d_ccpc_re_wsp_wdir(df):
+    """
+    inspired by a figure produce by Aurelien Colin CLS
+    :param df:
+    :return:
+    """
+    from matplotlib.colors import LinearSegmentedColormap
+    from scipy.interpolate import griddata
+    # try to reproduce the colormap used for doppler velocities used in OVL
+    # Define the colors in the desired order
+    colors = ['purple', 'magenta', 'purple', 'mediumblue', 'lightblue', 'white',
+              '#39FF14', 'yellow', 'orange', 'red', 'darkred']
+    colors = ['magenta', 'blue', 'cyan', 'chartreuse', 'yellow', 'orange', 'red']
+    colors = ['magenta', 'blue', 'cyan', 'white','chartreuse', 'yellow', 'orange', 'red']
+
+    colors = [
+        (0.0, 'magenta'),  # Lowest value
+        (0.2, 'blue'),  # Midway between magenta and cyan
+        (0.3, '#1E90FF'),  # Cyan for negative values approaching zero
+        (0.5, 'white'),  # White at zero
+        (0.7, 'chartreuse'),  # Chartreuse after white
+        (0.8, 'yellow'),  # Yellow
+        (0.9, 'orange'),  # Orange
+        (1.0, 'red')  # Highest value
+    ]
+
+    # Create a custom colormap with specified colors and centered white
+    cmap = LinearSegmentedColormap.from_list('custom_colormap', colors, N=25)
+
+    # Create the colormap with white centered at 0
+    # cmap = LinearSegmentedColormap.from_list('custom_cmap', colors, N=256)
+    wsp_bins = np.arange(0,25,0.7)
+    wdir_bins = np.arange(0,360,10)
+    plt.figure(figsize=(7,6),dpi=120)
+    print(df['CCPC_filt_Re'].values)
+    points = (df['Wspeed'].values,df['wdir_az'].values)
+    values = df['CCPC_filt_Re'].values
+    grid_x,grid_y = np.meshgrid(wsp_bins,wdir_bins)
+    grid_z0 = griddata(points, values, (grid_x, grid_y), method='nearest')
+    # plt.pcolormesh(df['Wspeed'],df['wdir_az'],df['CCPC_filt_Re'].values,bins=(wsp_bins,wdir_bins),cmap=cmap)
+    plt.pcolormesh(wsp_bins,wdir_bins,grid_z0,cmap=cmap,clim=(-0.1,0.1))
+    ax = plt.gca()
+    ax.xaxis.set_label_position('top')
+    ax.xaxis.tick_top()
+    cb = plt.colorbar(orientation='horizontal')
+    cb.set_label('CCPC real part []')
+    plt.title('IW XSP L1C B07 vv intraburst | all subswaths | all incidences')
+    plt.xlabel('wind speed ECMWF [m/s]')
+    plt.ylabel('azimuthtal wind direction [°]')
+    plt.gca().invert_yaxis()
+    plt.grid(True)
+    plt.show()
