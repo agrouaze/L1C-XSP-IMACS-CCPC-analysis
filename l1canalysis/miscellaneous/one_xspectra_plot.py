@@ -1,4 +1,3 @@
-import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -18,8 +17,6 @@ def plot_one_xspec(l1b_path, tile_line, tile_sample, group='intraburst', output_
     """
     import datatree
     from xsarslc.processing.xspectra import symmetrize_xspectrum
-    from xsarslc.tools import xndindex
-    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
     l1b = datatree.open_datatree(l1b_path)  # open the l1b product as a datatree
     if group == 'intraburst':

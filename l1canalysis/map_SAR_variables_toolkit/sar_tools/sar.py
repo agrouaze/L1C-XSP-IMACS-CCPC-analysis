@@ -18,7 +18,7 @@ import numpy.ma as ma
 import geopandas as gpd
 
 #Lisa's tools
-from map_SAR_variables_toolkit.plot_tools.maps import plot_map_with_data 
+from l1canalysis.map_SAR_variables_toolkit.plot_tools.maps import plot_map_with_data
 
 def preprocess_sar(ds0,varn=['sigma0_filt','normalized_variance_filt','macs_Re','macs_Im'],dims_sel={'channels_used':'VV,VH'}):
     """

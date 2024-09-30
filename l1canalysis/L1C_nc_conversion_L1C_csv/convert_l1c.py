@@ -1,4 +1,4 @@
-from l1c_B07_conversion import L1CConverter
+from l1canalysis.L1C_nc_conversion_L1C_csv.l1c_B07_conversion import L1CConverter
 import argparse
 import logging
 if __name__ == "__main__":

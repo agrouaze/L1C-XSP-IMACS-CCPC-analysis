@@ -1,0 +1,74 @@
+[project]
+name = "L1C-XSP-IMACS-CCPC-analysis"
+requires-python = ">= 3.10"
+license = {text = "MIT"}
+description = "python method to generate diagnostic analysis."
+readme = "README.md"
+dependencies = [
+  "numpy",
+  "pandas",
+  "matplotlib",
+  "seaborn",
+  "cartopy",
+  #"aar" # deactivate while not Pypi available https://gitlab.ifremer.fr/lops-wave/angles-antenna-referential
+]
+keywords = [
+  "numpy",
+  "earth-observation",
+  "remote-sensing",
+  "satellite-imagery",
+  "wind",
+  "wave",
+  "sar",
+  "synthetic-aperture-radar",
+
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering",
+]
+dynamic = ["version"]
+
+[project.urls]
+homepage = "https://github.com/umr-lops/L1C-XSP-IMACS-CCPC-analysis.readthedocs.io"
+documentation = "https://github.com/umr-lops/L1C-XSP-IMACS-CCPC-analysis.readthedocs.io"
+repository = "https://github.com/umr-lops/L1C-XSP-IMACS-CCPC-analysis"
+changelog = "https://github.com/umr-lops/L1C-XSP-IMACS-CCPC-analysis.readthedocs.io/en/latest/changelog.html"
+
+[project.scripts]
+
+
+[build-system]
+requires = ["setuptools>=64.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["l1canalysis"]
+
+[tool.setuptools_scm]
+fallback_version = "999"
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
+float_to_top = true
+default_section = "THIRDPARTY"
+known_first_party = "l1canalysis"
+
+[tool.black]
+line-length = 100
+
+[tool.coverage.run]
+source = ["l1canalysis"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING"]
