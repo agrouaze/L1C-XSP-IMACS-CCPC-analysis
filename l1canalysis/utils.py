@@ -8,6 +8,8 @@ import logging
 import glob
 import time
 from yaml import load
+import pandas as pd
+from aar.compute_angles import azimuth_direction,wind_direction_from_U_and_V
 mean_iangle = np.array(
     [
         31.64091048,
@@ -30,7 +32,7 @@ mean_iangle_iw2 = mean_iangle[4:9]
 mean_iangle_iw3 = mean_iangle[9:]
 
 sat_colors = {"S1A": "blue", "S1B": "red"}
-
+subswath_colors = {'iw1':'blue','iw2':'green','iw3':'red'}
 
 local_config_pontential_path = os.path.join(
     os.path.dirname(l1canalysis.__file__), "localconfig.yml"
@@ -58,7 +60,10 @@ def load_and_merge_dataframes(base_path,pola_acqui="1SDV",pola_chosen='VV',burst
     """
     dfs = {}
     for unit in ['S1A','S1B']:
-        safe_pattern = unit+'_IW_XSP__'+pola_acqui+'_*.SAFE/'
+        if test is True:
+            safe_pattern = unit + '_IW_XSP__' + pola_acqui + '_202104*.SAFE/'
+        else:
+            safe_pattern = unit+'_IW_XSP__'+pola_acqui+'_*.SAFE/'
         logging.info('safe_pattern : %s',safe_pattern)
         #
         # burst_type_pattern = 'interburst'
@@ -76,7 +81,7 @@ def load_and_merge_dataframes(base_path,pola_acqui="1SDV",pola_chosen='VV',burst
             #fns_csv += glob.glob(safe+csv_polar_pattern)      # we retrieve the .csv files from the preselected .SAFE files
         if test is True:
             logging.info('load only 10 .csv files for test')
-            fns_csv = fns_csv[0:10]
+            fns_csv = fns_csv#[0:1000]
         print('number of csv files : '+str(len(fns_csv)))
 
 
@@ -105,6 +110,7 @@ def load_and_merge_dataframes(base_path,pola_acqui="1SDV",pola_chosen='VV',burst
     df_s1a = dfs['S1A_'+pola_chosen]
     return df_s1a,df_s1b
 
+
 def add_ancillary_variables(df_s1a,df_s1b):
     """
     add ancillary wind information
@@ -119,7 +125,7 @@ def add_ancillary_variables(df_s1a,df_s1b):
         v = dataset[sar_unit]['V10']
         dataset[sar_unit]['Wspeed'] = np.sqrt(u**2 + v**2)                                # wind speed norm
         dataset[sar_unit]['wdir'] = wind_direction_from_U_and_V(u_component=u,v_component=v)
-        dataset[sar_unit]['wdir_az'] = azimuth_direction(ground_heading_angle=dataset[sar_unit]['ground_heading'],
+        dataset[sar_unit]['wdir_az'],dataset[sar_unit]['wdir_az_scat'] = azimuth_direction(ground_heading_angle=dataset[sar_unit]['ground_heading'],
                                                          u_component=u,v_component=v)
         # df_s1b['wdir'] = np.mod(180+(180/np.pi)*np.arctan2(u,v),360)           # wind direction taken from the north
         # # dataset[sar_unit]['wdir'] = np.mod((180 / np.pi) * np.arctan2(-u, -v), 360) # correction chatgpt
@@ -162,3 +168,123 @@ def add_ancillary_variables(df_s1a,df_s1b):
     # descending_s1a = heading_s1a[abs(heading_s1a) > 150]
     # ascending_s1a = heading_s1a[abs(heading_s1a) < 30]
     return dataset['S1A'],dataset['S1B']
+
+def std_curve_calc(az_wdir, imacs):
+    # bin setting
+    bin_edges = np.arange(0, 361, 5)  # Bins every 5 degrees
+    bin_centers = bin_edges + 5 / 2   # Centre of each bin
+    bin_centers = bin_centers[:-1]    # Delete the last element to keep the same length as bin_edges
+    Imacs_std= np.zeros_like(bin_centers)    # Initialise mean Imacs values
+
+    for i in range(len(bin_centers)):
+        mask = (az_wdir >= bin_centers[i] - 5) & (az_wdir < bin_centers[i] + 5)     # Mask to selects the points in the bin
+        Imacs_std[i] = np.std(imacs[mask]) if np.sum(mask) > 0 else np.nan  # Calculation of the Imacs std value in the bin
+
+    return bin_centers, Imacs_std
+
+# def std_curve_calc180(az_wdir, imacs):
+#     # bin setting
+#     bin_edges = np.arange(-180, 180, 5)  # Bins every 5 degrees
+#     bin_centers = bin_edges + 5 / 2   # Centre of each bin
+#     bin_centers = bin_centers[:-1]    # Delete the last element to keep the same length as bin_edges
+#     Imacs_std= np.zeros_like(bin_centers)    # Initialise mean Imacs values
+#
+#     for i in range(len(bin_centers)):
+#         mask = (az_wdir >= bin_centers[i] - 5) & (az_wdir < bin_centers[i] + 5)     # Mask to selects the points in the bin
+#         Imacs_std[i] = np.std(imacs[mask]) if np.sum(mask) > 0 else np.nan  # Calculation of the Imacs std value in the bin
+#
+#     return bin_centers, Imacs_std
+
+def mean_and_std_curve_calc_180_180(az_wdir,variabletested)->(np.ndarray,np.ndarray,np.ndarray):
+    """
+
+    :param az_wdir: np.ndarray
+    :param variabletested: np.ndarray
+    :return:
+    """
+    delta_azi = 5
+    bin_centers = np.arange(-180, 180, delta_azi)
+    valmean = np.zeros_like(bin_centers).astype(np.float64)  # Initialise mean Imacs values
+    valstd = np.zeros_like(bin_centers).astype(np.float64)  # Initialise mean Imacs values
+    nb_values = np.zeros_like(bin_centers).astype(np.float64)
+    for i in range(len(bin_centers)):
+        first_bound = (bin_centers[i] - delta_azi)
+        if first_bound<-180:
+            first_bound = first_bound%180
+        last_bound = (bin_centers[i] + delta_azi)
+        if last_bound>180:
+            last_bound = -180+last_bound%180
+        logging.debug('first_bound %s  last_bound %s', first_bound,last_bound)
+        if first_bound > last_bound:  # eg first=170 and last=-165 or first=180 and last=-162
+            mask = (az_wdir >= first_bound) | (az_wdir < last_bound)
+        else:  # eg first=25 and last=35
+            mask = (az_wdir >= first_bound) & (az_wdir < last_bound)
+        if np.sum(mask) > 0:
+            valmean[i] = np.mean(variabletested[mask])
+            valstd[i] = np.std(variabletested[mask])
+        else:
+            valmean[i] = np.nan
+            valstd[i] = np.nan
+        nb_values[i] = mask.sum()
+    return bin_centers, valmean,valstd,nb_values
+
+def mean_curve_calcandplot(ax,az_wdir, variable_tested, label,lw=2):
+    """
+
+    :param ax: pyplot.axis
+    :param az_wdir:np.ndarray
+    :param variable_tested: np.ndarray imacs or ccpc
+    :param label: str
+    :param lw: int
+    :return:
+    """
+    # new bin setting
+    # delta_azi = 5
+    # # bin_edges = np.arange(0, 361, delta_azi)  # Bins every 5 degrees
+    # # bin_centers = bin_edges + delta_azi / 2   # Centre of each bin
+    # # bin_centers = bin_centers[:-1]    # Del the last element to keep the same length as bin_edges
+    # bin_centers = np.arange(0, 360, delta_azi)
+    # mean_val = np.zeros_like(bin_centers)    # Initialise mean Imacs values
+    #
+    # for i in range(len(bin_centers)):
+    #     # mask = (az_wdir >= bin_centers[i] - 5) & (az_wdir < bin_centers[i] + 5)     # Mask to selects the points in the bin
+    #     if i == 0 or i==len(bin_centers)-1: # special case to make to 0° and 360° be the same
+    #         mask = (az_wdir<=delta_azi) | (az_wdir>=360-delta_azi)
+    #         logging.info('special bin #:%i bound az : %s %s',i,delta_azi,360-delta_azi)
+    #     else:
+    #         mask = (az_wdir >= bin_centers[i] - delta_azi) & (
+    #             az_wdir < bin_centers[i] + delta_azi
+    #         )  # Mask to selects the points in the bin
+    #         logging.info('bound az : %s %s', bin_centers[i] - delta_azi, bin_centers[i] + delta_azi)
+    #     mean_val[i] = np.mean(variable_tested[mask]) if np.sum(mask) > 0 else np.nan  # Calculation of the Imacs mean value in the bin
+    bin_centers,mean_val = mean_curve_calc2(az_wdir, variabletested=variable_tested)
+    ax.plot(bin_centers, mean_val, label=label, linestyle='-', lw = lw)     # plot the mean curve
+
+def mean_curve_calc2(az_wdir,variabletested)->(np.ndarray,np.ndarray):
+    """
+
+    :param az_wdir: np.ndarray
+    :param variabletested: np.ndarray
+    :return:
+    """
+    delta_azi = 5
+    bin_centers = np.arange(delta_azi / 2, 360 + delta_azi / 2, delta_azi)
+    valmean = np.zeros_like(bin_centers)  # Initialise mean Imacs values
+    valstd = np.zeros_like(bin_centers)
+    nb_values = np.zeros_like(bin_centers)
+    for i in range(len(bin_centers)):
+        first_bound = (bin_centers[i] - delta_azi) % 360
+        last_bound = (bin_centers[i] + delta_azi) % 360
+        # logging.info('first_bound %s  last_bound %s', first_bound,last_bound)
+        if first_bound > last_bound:  # eg first=355 and last=5
+            mask = (az_wdir >= first_bound) | (az_wdir < last_bound)
+        else:  # eg first=25 and last=35
+            mask = (az_wdir >= first_bound) & (az_wdir < last_bound)
+        if np.sum(mask) > 0:
+            valmean[i] = np.mean(variabletested[mask])
+            valstd[i] = np.std(variabletested[mask])
+        else:
+            valmean[i] = np.nan
+            valstd[i] = np.nan
+        nb_values[i] = mask.sum()
+    return bin_centers, valmean,valstd,nb_values
