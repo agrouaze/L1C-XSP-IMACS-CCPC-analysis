@@ -26,7 +26,9 @@ if __name__ == "__main__":
     # root_savepath = '/home1/scratch/agrouaze/l1c_converted/B07extension' # used for extension dataset only
     # root_savepath = '/home1/scratch/agrouaze/l1c_converted/B07full' # used for extension dataset only
     # root_savepath = '/home1/scratch/agrouaze/l1c_converted/B07medium' # used for extension dataset only
-    root_savepath = '/home1/scratch/agrouaze/l1c_converted/B07full_with_ccpc'
+   # root_savepath = '/home1/scratch/agrouaze/l1c_converted/B07full_with_ccpc'
+    root_savepath = '/home1/scratch/agrouaze/l1c_converted/B09full_imacs_normalized'
+    logging.info('root_savepath = %s',root_savepath)
     selected_vars = ['sigma0_filt','incidence','nesz', 'ground_heading',
                  'land_flag', 'uwnd', 'vwnd','U10', 'V10', 'macs_Im', 'macs_Re', 'normalized_variance_filt',
                  'CCPC_filt_Re','CCPC_filt_Im']
@@ -36,10 +38,11 @@ if __name__ == "__main__":
     l1c_converter = L1CConverter(input_path, root_savepath, selected_vars, 'intraburst')
     l1c_converter.converter(save=True)
 
+
+    # INTERBURST
     selected_vars = ['sigma0_filt','incidence','nesz', 'ground_heading',
                  'land_flag', 'uwnd', 'vwnd','U10', 'V10', 'macs_Im', 'macs_Re', 'normalized_variance_filt',
                  'CCPC_overlap_filt_Re','CCPC_overlap_filt_Im']
-    # INTERBURST
     l1c_converter = L1CConverter(input_path, root_savepath, selected_vars, 'interburst') 
     l1c_converter.converter(save=True)
     logging.info('end of processing : success')

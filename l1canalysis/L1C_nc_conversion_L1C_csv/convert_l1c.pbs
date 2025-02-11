@@ -9,7 +9,7 @@ echo "first argument: "$1
 #pybin=/home1/datawork/ljessel/micromamba-env/xsar_env_py3.9/bin/python3
 #$pybin /home1/datahome/ljessel/l1c_conversion/convert_l1c.py --input_path $1
 pybin=/home/datawork-cersat-public/cache/project/mpc-sentinel1/workspace/mamba/envs/imacs-l1c/bin/python3
-pyexe=/home1/datahome/agrouaze/git/L1C-XSP_IMACS-analysis/L1C_nc_conversion_L1C_csv/convert_l1c.py
+pyexe=/home1/datahome/agrouaze/git/L1C-XSP_IMACS-analysis/l1canalysis/L1C_nc_conversion_L1C_csv/convert_l1c.py
 echo 'pybin:'$pybin
 echo 'pyexe:'$pyexe
 $pybin $pyexe --input_path $1

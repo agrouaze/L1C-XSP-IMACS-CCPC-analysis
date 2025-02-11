@@ -1,5 +1,6 @@
 from yaml import CLoader as Loader
 import datetime
+from tqdm import tqdm
 import pdb
 import numpy as np
 import os
@@ -9,7 +10,7 @@ import glob
 import time
 from yaml import load
 import pandas as pd
-from aar.compute_angles import azimuth_direction,wind_direction_from_U_and_V
+from aar.compute_angles import azimuth_direction,wind_direction_from_u_and_v
 mean_iangle = np.array(
     [
         31.64091048,
@@ -31,7 +32,7 @@ mean_iangle_iw1 = mean_iangle[:4]
 mean_iangle_iw2 = mean_iangle[4:9]
 mean_iangle_iw3 = mean_iangle[9:]
 
-sat_colors = {"S1A": "blue", "S1B": "red"}
+sat_colors = {"S1A": "blue", "S1B": "red","S1A+B":"green"}
 subswath_colors = {'iw1':'blue','iw2':'green','iw3':'red'}
 
 local_config_pontential_path = os.path.join(
@@ -51,12 +52,16 @@ conf = load(stream, Loader=Loader)
 def load_and_merge_dataframes(base_path,pola_acqui="1SDV",pola_chosen='VV',burst_type_pattern = 'intraburst',test=False):
     """
 
+    this method read the .csv files on the file system and merge them in fat pandas.DataFrame
     :param base_path: directory where are stored the .csv files example "/home1/scratch/agrouaze/l1c_converted/B07/" # path with only extension
     :param pola: str 1SDV for instance
     :param burst_type_pattern: str intraburst or interburst
     :param pola_chosen: str VV or VH or ...
     :param test: bool True -> reduced number of csv files to load for test/debug
     :return:
+        df_s1a dataframe S1A for the polarisation chosen
+        df_s1b dataframe S1B for the polarisation chosen
+        dfs dict with keys for each SAR units and each polarization (even the one not chosen)
     """
     dfs = {}
     for unit in ['S1A','S1B']:
@@ -76,7 +81,9 @@ def load_and_merge_dataframes(base_path,pola_acqui="1SDV",pola_chosen='VV',burst
         safes = glob.glob(os.path.join(base_path,safe_pattern,burst_type_pattern))  # we retrieve all the .SAFE files we want
         print('number of SAFE files : '+str(len(safes)))
         fns_csv=[]
-        for safe in safes :
+        #for safe in safes :
+        for uu in tqdm(range(len(safes))):
+            safe = safes[uu]
             fns_csv += glob.glob(os.path.join(safe,'*.csv'))
             #fns_csv += glob.glob(safe+csv_polar_pattern)      # we retrieve the .csv files from the preselected .SAFE files
         if test is True:
@@ -87,7 +94,9 @@ def load_and_merge_dataframes(base_path,pola_acqui="1SDV",pola_chosen='VV',burst
 
         start_time = time.time()
         dataframes = []                         # Initialise a liste to stock the dataFrames
-        for csv_file in fns_csv[:]:             # browse each CSV file
+        #for csv_file in fns_csv[:]:             # browse each CSV file
+        for vv in tqdm(range(len(fns_csv))):
+            csv_file = fns_csv[vv]
             if os.path.getsize(csv_file) > 0:   # if the file is not empty
                 df = pd.read_csv(csv_file)      # read the file and add it to the dataframe
                 dataframes.append(df)
@@ -106,26 +115,28 @@ def load_and_merge_dataframes(base_path,pola_acqui="1SDV",pola_chosen='VV',burst
         # df = df_vv  # VV polarisation
         dfs['%s_%s'%(unit,'VV')] = df_all[df_all['pola']=='VV']
         dfs['%s_%s'%(unit,'VH')] = df_all[df_all['pola']=='VH']
-    df_s1b = dfs['S1B_'+pola_chosen]
-    df_s1a = dfs['S1A_'+pola_chosen]
-    return df_s1a,df_s1b
+    # df_s1b = dfs['S1B_'+pola_chosen]
+    # df_s1a = dfs['S1A_'+pola_chosen]
+    # return df_s1a,df_s1b,dfs
+    return dfs
 
 
-def add_ancillary_variables(df_s1a,df_s1b):
+def add_ancillary_variables(dfs):
     """
     add ancillary wind information
 
-    :param df_s1a:
-    :param df_s1b:
+    :param dfs: pd.DataFrame with leys such as 'S1A' or 'S1B_VH' ...
+
     :return:
     """
-    dataset = {'S1A':df_s1a,'S1B':df_s1b}
-    for sar_unit in dataset:
-        u = dataset[sar_unit]['U10']
-        v = dataset[sar_unit]['V10']
-        dataset[sar_unit]['Wspeed'] = np.sqrt(u**2 + v**2)                                # wind speed norm
-        dataset[sar_unit]['wdir'] = wind_direction_from_U_and_V(u_component=u,v_component=v)
-        dataset[sar_unit]['wdir_az'],dataset[sar_unit]['wdir_az_scat'] = azimuth_direction(ground_heading_angle=dataset[sar_unit]['ground_heading'],
+    # dataset = {'S1A':df_s1a,'S1B':df_s1b}
+    for keyd in dfs:
+        logging.info('dataset : %s',keyd)
+        u = dfs[keyd]['U10']
+        v = dfs[keyd]['V10']
+        dfs[keyd]['Wspeed'] = np.sqrt(u**2 + v**2)                                # wind speed norm
+        dfs[keyd]['wdir'] = wind_direction_from_u_and_v(u_component=u,v_component=v)
+        dfs[keyd]['wdir_az'],dfs[keyd]['wdir_az_scat'],dfs[keyd]['wdir_az_scat180'] = azimuth_direction(ground_heading_angle=dfs[keyd]['ground_heading'],
                                                          u_component=u,v_component=v)
         # df_s1b['wdir'] = np.mod(180+(180/np.pi)*np.arctan2(u,v),360)           # wind direction taken from the north
         # # dataset[sar_unit]['wdir'] = np.mod((180 / np.pi) * np.arctan2(-u, -v), 360) # correction chatgpt
@@ -136,7 +147,7 @@ def add_ancillary_variables(df_s1a,df_s1b):
         # df_s1b['wdir_az'] = ((df_s1b['wdir'] - df_s1b[
         #     'ground_heading'] ) % 360)  # test agrouaze
         # print('0°') #+90 tested +0 tested -270 tested
-        dataset[sar_unit]['sigma0_dB_filt'] = 10*np.log10(dataset[sar_unit]['sigma0_filt'])          # sigma0 filtered in dB
+        dfs[keyd]['sigma0_dB_filt'] = 10*np.log10(dfs[keyd]['sigma0_filt'])          # sigma0 filtered in dB
 
 
     ### Selection of the variables of interest for the MACS analysis
@@ -167,7 +178,7 @@ def add_ancillary_variables(df_s1a,df_s1b):
     # heading_s1a = df_s1a['ground_heading']
     # descending_s1a = heading_s1a[abs(heading_s1a) > 150]
     # ascending_s1a = heading_s1a[abs(heading_s1a) < 30]
-    return dataset['S1A'],dataset['S1B']
+    return dfs
 
 def std_curve_calc(az_wdir, imacs):
     # bin setting
