@@ -1,9 +1,10 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from l1canalysis.utils import mean_iangle
-def macs_wrt_incidence_up_down_cross_wind(df,satellite='S1A+B',part='Re',burstkind='intraburst',polarization='vv',lambda_val='50'):
-    ymin = -0.04
-    ymax = 0.04
+def macs_wrt_incidence_up_down_cross_wind(df,satellite='S1A+B',part='Re',burstkind='intraburst',polarization='vv',lambda_val='50',ymax=0.4):
+    #ymin = -0.04
+    #ymax = 0.04
+    ymin = -ymax
     xmin = 30
     xmax = 46
     varname = 'macs_%s_lambda_max=%s' % (part, float(lambda_val))
@@ -189,10 +190,11 @@ def macs_wrt_incidence_up_down_cross_wind(df,satellite='S1A+B',part='Re',burstki
     # fig.savefig('/home1/datahome/ljessel/Plots/MACS_analysis/s1ab_IMACS_iangle_wnd_filter_az.png')
     fig.show()
 
-def macs_wrt_incidence_recap(df,satellite='S1A+B',part='Re',burstkind='intraburst',polarization='vv',lambda_val='50'):
-    ymin = -0.01
-    ymax = 0.03
-
+def macs_wrt_incidence_recap(df,satellite='S1A+B',part='Re',burstkind='intraburst',polarization='vv',lambda_val='50',ymax=0.4):
+    #ymin = -0.01
+    
+    #ymax = 0.03
+    ymin = -ymax
     varname = 'macs_%s_lambda_max=%s' % (part, float(lambda_val))
     mean_iangle_s1 = list(mean_iangle)
     macs_Im_s1 = df[varname]

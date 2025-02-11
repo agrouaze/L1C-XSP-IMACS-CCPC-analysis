@@ -5,13 +5,9 @@ import logging
 from matplotlib import pyplot as plt
 import seaborn as sns
 from l1canalysis.miscellaneous.wind_inversion_functions import cmod5n_forward
-from l1canalysis.MACS_figures.plot_MACS_modulation_azimu_wrt_lambda_windpseed import (
-    mean_curve_calc2,
-    mean_curve_calcandplot,
-    mean_and_std_curve_calc_180_180)
-from l1canalysis.utils import sat_colors
+from l1canalysis.utils import sat_colors,mean_and_std_curve_calc_180_180,mean_curve_calc2,mean_curve_calcandplot
 
-def nrcs_verification_figure(df,satellite):
+def nrcs_verification_figure(df,satellite,azimuth_varname='wdir_az',density=True):
     """
 
     :param df: pd.DataFrame
@@ -23,8 +19,8 @@ def nrcs_verification_figure(df,satellite):
     logging.info('mask_verif : %s',mask_verif.sum())
     NRCS_verif = df['sigma0_dB_filt'][mask_verif]
     # az_wdir = df['wdir_az']
-    az_wdir = df['wdir_az_scat']
-    logging.info('scat azimuth')
+    az_wdir = df[azimuth_varname]
+    logging.info('azimuth_varname %s',azimuth_varname)
     # macs_Im_verif = df['macs_Im_lambda_max=50.0'][mask_verif]
     az_wdir_verif = az_wdir.loc[NRCS_verif.index]
 
@@ -45,9 +41,10 @@ def nrcs_verification_figure(df,satellite):
     ax_histx.tick_params(axis="x", labelbottom=False)
     ax_histy.tick_params(axis="y", labelleft=False)
 
-    ## density plots
-    sns.kdeplot(x=az_wdir_verif, y=NRCS_verif, color=sat_colors[satellite], fill=True, bw_adjust=.5, ax=ax, label=satellite)
-    ax.set_xlabel('Azimuthal wind direction [°]')
+    if density is True:
+        ## density plots
+        sns.kdeplot(x=az_wdir_verif, y=NRCS_verif, color=sat_colors[satellite], fill=True, bw_adjust=.5, ax=ax, label=satellite)
+    ax.set_xlabel('Azimuthal wind direction [°] \n %s'%azimuth_varname)
     ax.set_ylabel('NRCS [dB]')
 
     ax.axhline(0, color='black', lw=1)
@@ -63,7 +60,7 @@ def nrcs_verification_figure(df,satellite):
         ax.vlines([1, 359.9], -ymax, ymax, color='maroon', label='upwind', linestyles="dashdot",
                                 alpha=0.6, lw=3)
         ax.set_xticks([0, 90, 180, 270, 360])
-        bin_centers, nrcs_mean = mean_curve_calc2(az_wdir=az_wdir_verif, variabletested=NRCS_verif)
+        bin_centers, nrcs_mean,_,_ = mean_curve_calc2(az_wdir=az_wdir_verif, variabletested=NRCS_verif)
         azi0 = np.arange(361)
         x_bins = np.arange(0, 360 + binwidth, binwidth * 5)
     else:
@@ -103,8 +100,8 @@ def nrcs_verification_figure(df,satellite):
     # mean_curve_calcandplot(az_wdir_verif, NRCS_verif)
 
     label = 'mean'
-    ax.plot(bin_centers, nrcs_mean, label=label, linestyle='-', lw=2,
-            color=sat_colors[satellite], )  # plot the mean curve
+    ax.plot(bin_centers, nrcs_mean, label=label, linestyle='-', lw=3,
+            color='black', )  # plot the mean curve
 
     # CMOD5 curve
     # azi = np.arange(361)
