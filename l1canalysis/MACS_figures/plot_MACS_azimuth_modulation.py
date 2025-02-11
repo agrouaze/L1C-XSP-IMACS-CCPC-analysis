@@ -7,7 +7,7 @@ import logging
 import numpy as np
 import seaborn as sns
 
-def verification_figure(df,satellite):
+def verification_figure(df,satellite,product_id,ymax=0.1):
     ### IMACS ###
     mask_verif = (df['Wspeed'].values > 13) & (df['Wspeed'].values < 17) & (df['incidence'].values > 39) & (
                 df['incidence'].values < 41)  # selection of a range of 2 m/s around 15m/s wind speed and a range of 1° around 40° of incidence
@@ -23,7 +23,8 @@ def verification_figure(df,satellite):
                           left=0.1, right=0.9, bottom=0.1, top=0.9,
                           wspace=0.05, hspace=0.05)
 
-    ymax = 0.03
+    #ymax = 0.03 # raw MACS
+    #ymax = 0.1 # normalized
 
     # Create the Axes.
     ax = fig.add_subplot(gs[1, 0])
@@ -35,8 +36,9 @@ def verification_figure(df,satellite):
     ax_histy.tick_params(axis="y", labelleft=False)
 
     ## Density Plot
-    # sns.kdeplot(x=az_wdir_verif, y=macs_Im_verif, color=sat_colors[satellite], fill=True, bw_adjust=.5, ax=ax, label=satellite)
-    ax.set_ylim(-0.03, 0.03)
+    sns.kdeplot(x=az_wdir_verif, y=macs_Im_verif, color=sat_colors[satellite], fill=True, bw_adjust=.5, ax=ax, label=satellite)
+    #ax.set_ylim(-0.03, 0.03)
+    #ax.set_ylim(-0.1, 0.1)
     ax.set_xlabel('Azimuthal wind direction [°]')
     ax.set_ylabel('IMACS - vv - 50m [$m^{-6}$]')
 
@@ -88,7 +90,7 @@ def verification_figure(df,satellite):
     part2 = r'incidence : 40 $\pm$ 1 ° '
     part1 = r'wind : 15 $ \pm $ 2 m/s '
     part0 = 'Number of points: %d'%len(macs_Im_verif)
-    part3 = satellite+' (processing b07)'
+    part3 = satellite+' (processing %s)'%product_id
     txt_str = part0+'\n'+part1+'\n'+part2+'\n'+part3
     props = dict(boxstyle='square', facecolor='white')
     ax.text(0.03, 0.97, txt_str, transform=ax.transAxes, fontsize=8.5, verticalalignment='top', bbox=props)
@@ -102,17 +104,18 @@ def verification_figure(df,satellite):
     plt.show()
 
 def asc_desc_imacs_azi_modulation(
-    dfs, part="Re", burstkind="intraburst", subswath="iw1",lambda_val='50'
-):
+    dfs, part="Re", burstkind="intraburst", subswath="iw1",lambda_val='50',product_id='B09'
+,ymax=0.4):
 
     start_time = time.time()
 
-    if burstkind == 'interburst':
-        ymin = -0.02
-        ymax = 0.02  # interburst
-    else:
-        ymin = -0.04
-        ymax = 0.04  # intraburst
+    #if burstkind == 'interburst':
+    #    ymin = -0.02
+    #    ymax = 0.02  # interburst
+    #else:
+    #    ymin = -0.04
+    #    ymax = 0.04  # intraburst
+    ymin = -ymax
     xmin = 0
     xmax = 360
     nb_pts = {}
@@ -294,8 +297,8 @@ def asc_desc_imacs_azi_modulation(
                 bbox=props,
             )
     fig.suptitle(
-        "S1A & S1B comparison of mean MACS %s part versus azimuth wind direction | Processing B07 \n%s subswath | %s"
-        % (part, subswath.upper(), burstkind),
+        "S1A & S1B comparison of mean MACS %s part versus azimuth wind direction | Processing %s \n%s subswath | %s"
+        % (part, product_id, subswath.upper(), burstkind),
         y=0.93,
         fontsize=25,
     )
@@ -306,7 +309,7 @@ def asc_desc_imacs_azi_modulation(
     # fig.savefig('/home1/datahome/ljessel/Plots/MACS_analysis/IW_SLC_L1C_B07/intra/comp_S1AB/IMACS_comp_s1ab_ascdesc_iw1_inter.png')
     fig.show()
 
-def macs_azimutal_modulation_with_std(dfs,subswath="iw1",lambda_val='50',part="Re", burstkind="intraburst"):
+def macs_azimutal_modulation_with_std(dfs,subswath="iw1",lambda_val='50',part="Re", burstkind="intraburst",ymax=0.4,product_id='B09'):
     """
 
     :param dfs: dict with keys S1A and S1B
@@ -317,13 +320,13 @@ def macs_azimutal_modulation_with_std(dfs,subswath="iw1",lambda_val='50',part="R
     :return:
     """
     start_time = time.time()
-    if burstkind =='interburst':
-        ymin=-0.02
-        ymax=0.02 # interburst
-    else:
-        ymin = -0.04
-        ymax = 0.04  # intraburst
-
+    #if burstkind =='interburst':
+    #    ymin=-0.02
+    #    ymax=0.02 # interburst
+    #else:
+        #ymin = -0.04
+        #ymax = 0.04  # intraburst
+    ymin = -ymax
     mean_iangle_subswaths = {
         "iw1": mean_iangle_iw1,
         "iw2": mean_iangle_iw2,
@@ -439,7 +442,7 @@ def macs_azimutal_modulation_with_std(dfs,subswath="iw1",lambda_val='50',part="R
                           bbox=props)
 
     fig.suptitle(
-        'S1A & S1B comparison of mean IMACS versus azimuth wind direction | Processing B07 \n%s subswath | %s'%(subswath,burstkind),
+        'S1A & S1B comparison of mean IMACS versus azimuth wind direction | Processing %s \n%s subswath | %s'%(product_id,subswath,burstkind),
         y=0.93, fontsize=25)
     end_time = time.time()
     print('Ploting time :', end_time - start_time, 's')
@@ -449,7 +452,7 @@ def macs_azimutal_modulation_with_std(dfs,subswath="iw1",lambda_val='50',part="R
     fig.show()
 
 
-def macs_per_subswath_per_windspeed(df,satellite='S1A+B',part='Re',burstkind='intraburst',polarization='vv',lambda_val='50'):
+def macs_per_subswath_per_windspeed(df,satellite='S1A+B',part='Re',burstkind='intraburst',polarization='vv',lambda_val='50',ymax=0.4):
     """
 
     section 4.3 in notebook S1A_S1B_IMACS_mean_analysis.ipynb
@@ -471,8 +474,9 @@ def macs_per_subswath_per_windspeed(df,satellite='S1A+B',part='Re',burstkind='in
 
     import matplotlib.gridspec as gridspec
 
-    ymin = -0.02
-    ymax = 0.02
+    #ymin = -0.02
+    #ymax = 0.02
+    ymin = -ymax
     xmin = 0
     xmax = 360
     ls = ['solid', 'dotted', 'dashed', 'dashdot']
@@ -604,11 +608,12 @@ def macs_per_subswath_per_windspeed(df,satellite='S1A+B',part='Re',burstkind='in
     plt.show()
 
 
-def macs_az_windspeed_inc_recap(df,satellite='S1A+B',part='Re',burstkind='intraburst',polarization='vv',lambda_val='50'):
+def macs_az_windspeed_inc_recap(df,satellite='S1A+B',part='Re',burstkind='intraburst',polarization='vv',lambda_val='50',ymax=0.4):
     fig, ax = plt.subplots(1, 4, figsize=(60, 12))
     varname = 'macs_%s_lambda_max=%s' % (part, float(lambda_val))
-    ymin = -0.04
-    ymax = 0.04
+    #ymin = -0.04
+    #ymax = 0.04
+    ymin = -ymax
     xmin = 0
     xmax = 360
     mean_iangle_s1_sel = mean_iangle[::2]
