@@ -64,14 +64,13 @@ def preprocess_sar(ds0,varn=['sigma0_filt','normalized_variance_filt','macs_Re',
     ds = ds.assign(stop  =  dt_stop)
     return ds
 
-def create_polygon(ds_sar,idx_sw,idx_b,idx_l,idx_s):
+def create_polygon(ds_sar,idx_sw,idx_l,idx_s):
     """
     Creates shapely polygons for a specific SAR tile 
     
     	Parameters: 
 		ds_sar (xarray.DataSet): dataset containing SARWAVE L2 informations 
-		idx_sw (int): swath index of tile 
-		idx_b  (int): burst index of tile
+		idx_sw (int): swath index of tile
 		idx_l  (int): line index of tile
 		idx_s  (int): sample index of tile
 
@@ -81,27 +80,27 @@ def create_polygon(ds_sar,idx_sw,idx_b,idx_l,idx_s):
     """
     # if swath dimension exists
     if idx_sw is not None: 
-        if not np.any(np.isnan(ds_sar.corner_longitude.isel(swath=idx_sw,burst=idx_b,tile_line=idx_l,tile_sample=idx_s).values)):
-            return geometry.Polygon ([(ds_sar.corner_longitude.isel(swath=idx_sw,burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=0),
-              ds_sar.corner_latitude .isel(swath=idx_sw,burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=0)),
-             (ds_sar.corner_longitude.isel(swath=idx_sw,burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=0),
-              ds_sar.corner_latitude .isel(swath=idx_sw,burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=0)),
-             (ds_sar.corner_longitude.isel(swath=idx_sw,burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=1),
-              ds_sar.corner_latitude .isel(swath=idx_sw,burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=1)),
-             (ds_sar.corner_longitude.isel(swath=idx_sw,burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=1),
-              ds_sar.corner_latitude .isel(swath=idx_sw,burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=1))])
+        if not np.any(np.isnan(ds_sar.corner_longitude.isel(swath=idx_sw,tile_line=idx_l,tile_sample=idx_s).values)):
+            return geometry.Polygon ([(ds_sar.corner_longitude.isel(swath=idx_sw,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=0),
+              ds_sar.corner_latitude .isel(swath=idx_sw,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=0)),
+             (ds_sar.corner_longitude.isel(swath=idx_sw,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=0),
+              ds_sar.corner_latitude .isel(swath=idx_sw,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=0)),
+             (ds_sar.corner_longitude.isel(swath=idx_sw,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=1),
+              ds_sar.corner_latitude .isel(swath=idx_sw,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=1)),
+             (ds_sar.corner_longitude.isel(swath=idx_sw,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=1),
+              ds_sar.corner_latitude .isel(swath=idx_sw,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=1))])
         else: 
            return geometry.Polygon ([])
     else: 
-        if not np.any(np.isnan(ds_sar.corner_longitude.isel(burst=idx_b,tile_line=idx_l,tile_sample=idx_s).values)):
-            return geometry.Polygon ([(ds_sar.corner_longitude.isel(burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=0),
-              ds_sar.corner_latitude .isel(burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=0)),
-             (ds_sar.corner_longitude.isel(burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=0),
-              ds_sar.corner_latitude .isel(burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=0)),
-             (ds_sar.corner_longitude.isel(burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=1),
-              ds_sar.corner_latitude .isel(burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=1)),
-             (ds_sar.corner_longitude.isel(burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=1),
-              ds_sar.corner_latitude .isel(burst=idx_b,tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=1))])
+        if not np.any(np.isnan(ds_sar.corner_longitude.isel(tile_line=idx_l,tile_sample=idx_s).values)):
+            return geometry.Polygon ([(ds_sar.corner_longitude.isel(tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=0),
+              ds_sar.corner_latitude .isel(tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=0)),
+             (ds_sar.corner_longitude.isel(tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=0),
+              ds_sar.corner_latitude .isel(tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=0)),
+             (ds_sar.corner_longitude.isel(tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=1),
+              ds_sar.corner_latitude .isel(tile_line=idx_l,tile_sample=idx_s).isel(c_sample=1,c_line=1)),
+             (ds_sar.corner_longitude.isel(tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=1),
+              ds_sar.corner_latitude .isel(tile_line=idx_l,tile_sample=idx_s).isel(c_sample=0,c_line=1))])
         else: 
            return geometry.Polygon ([])
 
@@ -119,10 +118,10 @@ def get_swath_tiles_polygons_from_l2(ds_sar):
     polygons_tmp = []
     for idx_sw in range(len(ds_sar.swath)):
         #print('processing swath number %d' %idx_sw)
-        for idx_b  in range(len(ds_sar.burst      )):
-            for idx_l  in range(len(ds_sar.tile_line  )):
-                for idx_s  in range(len(ds_sar.tile_sample)):
-                    polygons_tmp.append(create_polygon(ds_sar,idx_sw,idx_b,idx_l,idx_s))
+
+        for idx_l  in range(len(ds_sar.tile_line  )):
+            for idx_s  in range(len(ds_sar.tile_sample)):
+                polygons_tmp.append(create_polygon(ds_sar,idx_sw,idx_l,idx_s))
     
     polygons = gpd.GeoSeries(polygons_tmp,crs=4326)
     return polygons
@@ -150,15 +149,14 @@ def get_footprint_polygons_from_l2(ds_sar):
     return polygons_fp
 
 
-def extract_wanted_sar_values(ds,name,idx_sw=None,idx_b=None,idx_l=None,idx_s=None):
+def extract_wanted_sar_values(ds,name,idx_sw=None,idx_l=None,idx_s=None):
     """
     Extracts a data variable from the SAR Dataset for a specific tile.   
     
         Parameters: 
                 ds     (xarray.DataSet): dataset containing SARWAVE L2 informations
                 name   (str): name of the wanted data variable
-                idx_sw (int): swath index of tile 
-                idx_b  (int): burst index of tile
+                idx_sw (int): swath index of tile
                 idx_l  (int): line index of tile
                 idx_s  (int): sample index of tile
 
@@ -169,13 +167,11 @@ def extract_wanted_sar_values(ds,name,idx_sw=None,idx_b=None,idx_l=None,idx_s=No
     # if swath dimension exists
     if len(ds.swath)>1:
         return np.squeeze([ds[name].isel(swath       = idx_sw[idx],
-                                         burst       = idx_b [idx],
                                          tile_line   = idx_l [idx],
                                          tile_sample = idx_s [idx]).values for idx in range(len(idx_sw))])
     else:
-        return np.squeeze([ds[name].isel(burst       = idx_b [idx],
-                                         tile_line   = idx_l [idx],
-                                         tile_sample = idx_s [idx]).values for idx in range(len(idx_b))])
+        return np.squeeze(ds[name].isel(tile_line   = idx_l ,
+                                         tile_sample = idx_s).values)
 
 def create_gdfs_for_sar(ds_sar,valn,polygons,**kwargs):
     """
