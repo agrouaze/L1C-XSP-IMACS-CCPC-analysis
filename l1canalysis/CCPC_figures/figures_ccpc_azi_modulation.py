@@ -4,35 +4,12 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import time
 import logging
-
-### To make maps with Cartopy using local data
-# import cartopy.crs as ccrs
-# import cartopy.feature as cfeature
-# from cartopy.io.shapereader import Reader
-
-# TODO: introduce the future package name below
-from l1canalysis.MACS_figures.plot_MACS_modulation_azimu_wrt_lambda_windpseed import (
-    mean_curve_calcandplot,
-    mean_curve_calc2,
-    mean_curve_calc_180_180
-)
 from l1canalysis.utils import mean_iangle_iw1,mean_iangle_iw2,mean_iangle_iw3
-from l1canalysis.utils import conf,sat_colors
-# Define local data path
-# local_shapefile_dir = '/home1/datahome/ljessel/Cartopy/'  # Remplacez par le chemin vers vos fichiers décompressés
-# local_shapefile_dir = "/home/datawork-cersat-public/cache/project/sarwave/tools/landmask/cartopy/shapefiles/natural_earth/physical"
-# local_shapefile_dir = conf['local_shapefile_dir']
-# shapefile_path = os.path.join(local_shapefile_dir, "ne_110m_coastline.shp")
-#
-# # Read the local data by using Reader
-# coastline = Reader(shapefile_path).geometries()
-# coastline_feature = cfeature.ShapelyFeature(coastline, ccrs.PlateCarree())
+from l1canalysis.utils import conf,sat_colors,mean_curve_calcandplot,mean_curve_calc2,mean_and_std_curve_calc_180_180
 
 
 
-
-
-def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind):
+def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind,az_varname='wdir_az_scat',density=True):
     """
     sanity check figure
 
@@ -55,8 +32,11 @@ def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind):
         ccpc_Re_verif = df["CCPC_overlap_filt_Re"][mask_verif]
     else:
         raise Exception("burstkind : %s not handled", burstkind)
+    # az_wdir_verif = (
+    #     df["wdir_az"].loc[ccpc_Re_verif.index].values
+    # )  # selection of the az_wdir corresponding to the range
     az_wdir_verif = (
-        df["wdir_az"].loc[ccpc_Re_verif.index].values
+        df[az_varname].loc[ccpc_Re_verif.index].values
     )  # selection of the az_wdir corresponding to the range
     # plot figure
     fig = plt.figure(figsize=(8, 6))
@@ -74,10 +54,15 @@ def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind):
     )
 
     ymax = 0.08
-    # xmin = 0
-    # xmax = 360
-    xmin = -5
-    xmax = 365
+    if az_varname == 'wdir_az_scat':
+        # xmin = 0
+        # xmax = 360
+        xmin = -5
+        xmax = 365
+    else:
+        xmin = -180
+        xmax = 180
+
 
     # Create the Axes.
     ax = fig.add_subplot(gs[1, 0])
@@ -91,62 +76,68 @@ def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind):
         color = 'green'
     else:
         color = sat_colors[satellite]
-    ## Density Plot
-    sns.kdeplot(
-        x=az_wdir_verif,
-        y=ccpc_Re_verif.values,
-        color=color,
-        fill=True,
-        ax=ax,
-        label=satellite,
-        bw_adjust = .5
-    )  #
+    if density is True:
+        ## Density Plot
+        sns.kdeplot(
+            x=az_wdir_verif,
+            y=ccpc_Re_verif.values,
+            color=color,
+            fill=True,
+            ax=ax,
+            label=satellite,
+            bw_adjust = .5
+        )  #
 
     ax.set_ylim(-ymax, ymax)
     ax.set_xlabel("Azimuthal wind direction [°]")
     ax.set_ylabel("CCPC -Real part - vv - [$m^{-6}$]")
-
-    # ax.vlines(
-    #     [90, 270],
-    #     -ymax,
-    #     ymax,
-    #     color="teal",
-    #     label="crosswind",
-    #     linestyles="dashdot",
-    #     alpha=0.6,
-    #     lw=2.5,
-    # )
-    # ax.vlines(
-    #     180,
-    #     -ymax,
-    #     ymax,
-    #     color="black",
-    #     label="downwind",
-    #     linestyles="dashdot",
-    #     alpha=0.6,
-    #     lw=2.5,
-    # )
-    # ax.vlines(
-    #     [1, 359.9],
-    #     -ymax,
-    #     ymax,
-    #     color="maroon",
-    #     label="upwind",
-    #     linestyles="dashdot",
-    #     alpha=0.6,
-    #     lw=3,
-    # )
+    if az_varname == 'wdir_az_scat':
+        ax.vlines(
+            [90, 270],
+            -ymax,
+            ymax,
+            color="teal",
+            label="crosswind",
+            linestyles="dashdot",
+            alpha=0.6,
+            lw=2.5,
+        )
+        ax.vlines(
+            180,
+            -ymax,
+            ymax,
+            color="black",
+            label="downwind",
+            linestyles="dashdot",
+            alpha=0.6,
+            lw=2.5,
+        )
+        ax.vlines(
+            [1, 359.9],
+            -ymax,
+            ymax,
+            color="maroon",
+            label="upwind",
+            linestyles="dashdot",
+            alpha=0.6,
+            lw=3,
+        )
+    binwidth = 1
     ax.axhline(0, color="black", lw=1)
-    # ax.set_xticks([0, 90, 180, 270, 360])
-    ax.set_xticks([-180, -90,0, 90, 180])
+    if az_varname == 'wdir_az_scat':
+        ax.set_xticks([0, 90, 180, 270, 360])
+        x_bins = np.arange(0, 360 + binwidth, binwidth * 5)
+    else:
+        ax.set_xticks([-180, -90,0, 90, 180])
+        x_bins = np.arange(-180, 180 + binwidth, binwidth * 5)
     # ax.set_xlim(xmin, xmax)
     ax.set_ylim(-ymax, ymax)
     ax.grid(ls="--")
 
     ## Histogramms
-    binwidth = 1
-    # x_bins = np.arange(0, 360 + binwidth, binwidth * 5)
-    x_bins = np.arange(-180, 180 + binwidth, binwidth * 5)
+
+
+    # x_bins = np.arange(-180, 180 + binwidth, binwidth * 5)
     ax_histx.hist(az_wdir_verif, bins=x_bins, color=color)
     ax_histx.grid(ls="--")
     y_bins = np.arange(-ymax, ymax, binwidth * ymax ** 2)
@@ -154,9 +145,11 @@ def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind):
     ax_histy.grid(ls="--")
 
     ## box title
+    windpart = r'wind : 15 $\pm$ 2 m/s '
+    incpart = r'incidence : 40 $\pm$ 1 ° '
     txt_str = (
-        "Number of points: %d \nwind : 15 $\pm$ 2 m/s \nincidence : 40 $\pm$ 1 ° \n%s %s (processing b07)"
-        % (len(ccpc_Re_verif), satellite, burstkind)
+        "Number of points: %d \n"%len(ccpc_Re_verif)+windpart+"\n"+incpart+" \n%s %s (processing B07)"
+        % (satellite, burstkind)
     )
     props = dict(boxstyle="square", facecolor="white")
     ax.text(
@@ -170,13 +163,23 @@ def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind):
     )
 
     # mean curve calculation
-    mean_curve_calcandplot(
-        az_wdir=az_wdir_verif,
-        variable_tested=ccpc_Re_verif,
-        lw=2,
-        label="mean curve",
-        ax=ax,
-    )
+    if az_varname == 'wdir_az' or az_varname=='wdir_az_scat180':
+        bin_centers, ccpc_mean, _, _ = mean_and_std_curve_calc_180_180(
+            az_wdir_verif, ccpc_Re_verif
+        )
+    else:
+        bin_centers, ccpc_mean, _, _ = mean_curve_calc2(
+            az_wdir_verif, ccpc_Re_verif
+        )
+    logging.debug('ccpc_mean:  %s bin_centers %s',ccpc_mean,bin_centers)
+    ax.plot(bin_centers,ccpc_mean,'--',lw=3,label='mean',color='k')
+    # mean_curve_calcandplot(
+    #     az_wdir=az_wdir_verif,
+    #     variable_tested=ccpc_Re_verif,
+    #     lw=2,
+    #     label="mean curve",
+    #     ax=ax,
+    # )
 
     ax.legend()
     plt.show()
@@ -207,6 +210,13 @@ def ccpc_single_verification_figure_azi_modulation(df, satellite, burstkind):
 #     return bin_centers, valmean
 
 def convert_angles(angles):
+    """
+    method to get angles between -180 and 180...
+    method probably useless since or we are in -180 180 thanks to aar library or
+    we are in the scatterometry convention (0°=upwind) so between 0 and 360°
+    :param angles:
+    :return:
+    """
     # Use modulo to ensure angles are within [0°, 360°] if needed.
     angles = np.mod(angles, 360)
     # Convert angles to [-180°, 180°] range
@@ -267,15 +277,17 @@ def longepe_azi_figure_asc_desc(df, burstkind="intraburst"):
                 nb_pts["_ascen"] = len(ccpc_sel_asc)
                 nb_pts["_descen"] = len(ccpc_sel_desc)
                 logging.debug('nb points asc : %s',nb_pts["_ascen"])
-                az_wdir_sel_asc = df["wdir_az"].loc[
+                az_wdir_sel_asc = df["wdir_az_scat"].loc[
                     ccpc_sel_asc.index]
-                az_wdir_sel_desc = df["wdir_az"].loc[
+                az_wdir_sel_desc = df["wdir_az_scat"].loc[
                     ccpc_sel_desc.index]
-                az_wdir_sel_asc0 = convert_angles(az_wdir_sel_asc)
+                # az_wdir_sel_asc0 = convert_angles(az_wdir_sel_asc)
+                az_wdir_sel_asc0 = az_wdir_sel_asc
                 az_wdir_sel_asc = pd.Series(az_wdir_sel_asc0,index=az_wdir_sel_asc.index)
-                az_wdir_sel_desc0 = convert_angles(az_wdir_sel_desc)
+                # az_wdir_sel_desc0 = convert_angles(az_wdir_sel_desc)
+                az_wdir_sel_desc0 = az_wdir_sel_desc
                 az_wdir_sel_desc = pd.Series(az_wdir_sel_desc0, index=az_wdir_sel_desc.index)
-                assert (az_wdir_sel_asc>180).sum()==0
+                # assert (az_wdir_sel_asc>180).sum()==0
                 # ## Dataframe boundaries extension for ascending data (PART I DONT UNDERSTAND , WORKING WITHOUT)
                 # # Create a new dataframe to duplicate data from the left (300° --> 0°)
                 # ccpc_before = ccpc_sel_asc[az_wdir_sel_asc >= 300]
@@ -317,7 +329,7 @@ def longepe_azi_figure_asc_desc(df, burstkind="intraburst"):
                 # bin_centers, Imacs_mean = mean_curve_calc2(
                 #     az_wdir_ext_s1a_asc, imacs_ext_s1a_asc
                 # )
-                bin_centers, ccpc_mean,_ = mean_curve_calc_180_180(
+                bin_centers, ccpc_mean,_ = mean_and_std_curve_calc_180_180(
                     az_wdir_sel_asc, ccpc_sel_asc
                 ) # agrouaze #1
                 # bin_centers, ccpc_mean,_ = mean_curve_calc_180_180(
@@ -327,18 +339,18 @@ def longepe_azi_figure_asc_desc(df, burstkind="intraburst"):
                     bin_centers,
                     ccpc_mean,
                     color=windspeed_colors[wwi],
-                    label="%1.1f $\pm$%i m/s asc"%(wscenter,delta_ws),
+                    label=r"%1.1f $\pm$%i m/s asc"%(wscenter,delta_ws),
                     linestyle="-",
                     lw=2,
                 )  # plot the mean curve
-                bin_centers, ccpc_mean,_ = mean_curve_calc_180_180(
+                bin_centers, ccpc_mean,_ = mean_and_std_curve_calc_180_180(
                     az_wdir_sel_desc, ccpc_sel_desc
                 )
                 ax[i][j].plot(
                     bin_centers,
                     ccpc_mean,
                     color=windspeed_colors[wwi],
-                    label="%1.1f $\pm$%i m/s desc"%(wscenter,delta_ws),
+                    label=r"%1.1f $\pm$%i m/s desc"%(wscenter,delta_ws),
                     linestyle="--",
                     lw=2,
                 )  # plot the mean curve
@@ -380,13 +392,14 @@ def longepe_azi_figure_asc_desc(df, burstkind="intraburst"):
                 ax[i][j].set_ylabel("")
             ax[i][j].grid(linestyle="--", color="gray", alpha=0.9)
             ax[i][j].legend(fontsize=8, loc="upper right")
+            incpart = r"incidence : %.1f $\pm$ %i°"%(incidences[j],delta_inc)
             txt_str = (
-                    "Ascending pts num: %d \nDescending pts num: %d \nincidence : %.1f $\pm$ %i°"
-                    % (
+                    "Ascending pts num: %d \nDescending pts num: %d \n"% (
                         nb_pts["_ascen"],
                         nb_pts["_descen"],
-                        incidences[j],delta_inc,
-                    )
+
+                    )+incpart
+
             )
             props = dict(boxstyle="square", facecolor="white")
             ax[i][j].text(
@@ -412,17 +425,44 @@ def longepe_azi_figure_asc_desc(df, burstkind="intraburst"):
     fig.show()
 
 
-def longepe_azi_figure(df, burstkind="intraburst"):
+def longepe_azi_figure(df, burstkind="intraburst",azimuth_varname='wdir_az_scat',ccpc_method='uncalibrated'):
     """
 
-    :param df: S1A+S1B
-    :param burstkind:
+    :param df: pandas.DataFrame S1A+S1B
+    :param burstkind: str intraburst or interburst
+    :param azimuth_varname: str
     :return:
     """
-    start_time = time.time()
+    ccpc_methods = {
+            'uncalibrated':{
+                'intraburst':{'Re':"CCPC_filt_Re",'Im':'CCPC_filt_Im'},
+                'interburst':{'Re':"CCPC_overlap_filt_Re",'Im':'CCPC_overlap_filt_Im'},
 
-    xmin = -180
-    xmax = 180
+            },
+            'longepe':{
+                        'intraburst':{'Re':"ccpc_calib_longepe_Re",'Im':'ccpc_calib_longepe_Im'},
+                        # 'interburst':{'Re':"CCPC_overlap_filt_Re",'Im':'CCPC_overlap_filt_Im'}, #TBD
+
+                        },
+            'scipyv1':{
+                       'intraburst':{'Re':"ccpc_calib_scipy_v1_Re",'Im':'ccpc_calib_scipy_v1_Im'},
+                       # 'interburst':{'Re':"CCPC_overlap_filt_Re",'Im':'CCPC_overlap_filt_Im'}, #TBD
+
+                       },
+            'tensorflowv1':{
+                           'intraburst':{'Re':"ccpc_calib_tensorflow_v1_Re",'Im':'ccpc_calib_tensorflow_v1_Im'},
+                           # 'interburst':{'Re':"CCPC_overlap_filt_Re",'Im':'CCPC_overlap_filt_Im'}, #TBD
+
+                       },
+            }
+    start_time = time.time()
+    logging.info('azimuth_varname : %s',azimuth_varname)
+    if azimuth_varname == 'wdir_az' or azimuth_varname=='wdir_az_scat180':
+        xmin = -180
+        xmax = 180
+    else:
+        xmin = 0
+        xmax = 360
     nb_pts = {}
     windpeeds = np.arange(2, 16, 2)
     windspeed_colors = ['b','g','r','c','m','y','k']
@@ -433,51 +473,58 @@ def longepe_azi_figure(df, burstkind="intraburst"):
         ,'Im': {'ymin':-0.07,'ymax':0.07}
     }
     # chosen_mean_iangle = mean_iangle_subswaths[subswath]
-    fig, ax = plt.subplots(len(variables), len(incidences), figsize=(3*8, 3*6))
-    if burstkind == "intraburst":
-
-        varname_re = "CCPC_filt_Re"
-        varname_im = "CCPC_filt_Im"
-    elif burstkind == "interburst":
-        varname_re = "CCPC_overlap_filt_Re"
-        varname_im = "CCPC_overlap_filt_Im"
+    # fig, ax = plt.subplots(len(variables), len(incidences), figsize=(3*8, 3*6))
+    fig, ax = plt.subplots(len(variables), len(incidences), figsize=(3 * 6, 3 * 4))
+    # if burstkind == "intraburst":
+    #     varname_re = "CCPC_filt_Re"
+    #     varname_im = "CCPC_filt_Im"
+    # elif burstkind == "interburst":
+    #     varname_re = "CCPC_overlap_filt_Re"
+    #     varname_im = "CCPC_overlap_filt_Im"
+    varname_re = ccpc_methods[ccpc_method][burstkind]['Re']
+    varname_im = ccpc_methods[ccpc_method][burstkind]['Im']
     values_ccpc = {'Amplitude': abs(df[varname_re]+1j*df[varname_im]), # TO BE CHECKED wrt paper
                    'Re':df[varname_re],
                    'Im':df[varname_im],}
     delta_ws = 2 #m/s
     delta_inc = 1 # degree
     for i,var_x in enumerate(variables):
-
         for j in range(len(incidences)):  # "loop over the incidence angles
             for wwi,wscenter in enumerate(windpeeds):
                 wnd_mask = (df["Wspeed"] > wscenter-delta_ws) & (df["Wspeed"] < wscenter+delta_ws)
                 inc_mask = (df["incidence"] > incidences[j]-delta_inc) & (df["incidence"] < incidences[j]+delta_inc)
                 # Selection of data
                 ccpc_selection = values_ccpc[var_x][wnd_mask & inc_mask].dropna()
-
                 nb_pts = len(ccpc_selection)
-
-                az_wdir_sel = df["wdir_az"].loc[
+                # az_wdir_sel = df["wdir_az"].loc[
+                #     ccpc_selection.index]
+                az_wdir_sel = df[azimuth_varname].loc[
                     ccpc_selection.index]
-                az_wdir_sel0 = convert_angles(az_wdir_sel)
-                az_wdir_sel = pd.Series(az_wdir_sel0,index=az_wdir_sel.index)
+                # az_wdir_sel0 = convert_angles(az_wdir_sel)
+                az_wdir_sel = pd.Series(az_wdir_sel,index=az_wdir_sel.index)
 
-
-                bin_centers, ccpc_mean,_ = mean_curve_calc_180_180(
-                    az_wdir_sel, ccpc_selection
-                ) # agrouaze #1
+                if azimuth_varname == 'wdir_az' or azimuth_varname=='wdir_az_scat180':
+                    bin_centers, ccpc_mean,_,_ = mean_and_std_curve_calc_180_180(
+                        az_wdir_sel, ccpc_selection
+                    )
+                else:
+                    bin_centers, ccpc_mean, _, _ = mean_curve_calc2(
+                        az_wdir_sel, ccpc_selection
+                    )
 
                 ax[i][j].plot(
                     bin_centers,
                     ccpc_mean,
                     color=windspeed_colors[wwi],
-                    label="%1.1f $\pm$%i m/s asc"%(wscenter,delta_ws),
+                    label=r"%1.1f $\pm$%i m/s"%(wscenter,delta_ws),
                     linestyle="-",
                     lw=2,
                 )  # plot the mean curve
 
-
-            ax[i][j].set_xticks([-180, -90, 0, 90, 180])
+            if azimuth_varname == 'wdir_az' or azimuth_varname=='wdir_az_scat180':
+                ax[i][j].set_xticks([-180, -90, 0, 90, 180])
+            else:
+                ax[i][j].set_xticks([ 0, 90, 180,270,360])
             ax[i][j].tick_params(axis="x", labelsize=15)
             ax[i][j].tick_params(axis="y", labelsize=15)
             ax[i][j].set_xlim(xmin, xmax)
@@ -491,14 +538,10 @@ def longepe_azi_figure(df, burstkind="intraburst"):
             else:
                 ax[i][j].set_ylabel("")
             ax[i][j].grid(linestyle="--", color="gray", alpha=0.9)
-            ax[i][j].legend(fontsize=8, loc="upper right")
-            txt_str = (
-                    "pts num: %d\nincidence : %.1f $\pm$ %i°"
-                    % (
-                        nb_pts,
-                        incidences[j],delta_inc,
-                    )
-            )
+            ax[i][j].legend(fontsize=8, loc="upper right",ncols=2)
+            part2 = r"inc : %.1f $\pm$ %i°"%(incidences[j],delta_inc)
+            txt_str = "pts: %d\n"% (nb_pts)+part2
+
             props = dict(boxstyle="square", facecolor="white")
             ax[i][j].text(
                 0.03,
@@ -510,9 +553,9 @@ def longepe_azi_figure(df, burstkind="intraburst"):
                 bbox=props,
             )
     fig.suptitle(
-        "S1A+B CCPC versus azimuth wind direction | Processing B07 | %s"
-        % (burstkind),
-        y=0.93,
+        "S1A+B CCPC versus azimuth wind direction | Processing B07 | %s | %s\n %s"
+        % (burstkind,azimuth_varname,ccpc_method),
+        y=0.97,
         fontsize=25,
     )
 
@@ -524,7 +567,7 @@ def longepe_azi_figure(df, burstkind="intraburst"):
 
 
 def asc_desc_ccpc_azi_modulation(
-    dfs, part="Re", burstkind="intraburst", subswath="iw1"
+    dfs, part="Re", burstkind="intraburst", subswath="iw1",azimuth_varname='wdir_az_scat'
 ):
 
     start_time = time.time()
@@ -532,8 +575,12 @@ def asc_desc_ccpc_azi_modulation(
     # ymin=-0.02;ymax=0.02 # interburst
     ymin = -0.08
     ymax = 0.08  # intraburst
-    xmin = 0
-    xmax = 360
+    if azimuth_varname=='azimuth_varname':
+        xmin = 0
+        xmax = 360
+    else:
+        xmin = -180
+        xmax = 180
     nb_pts = {}
 
     if burstkind == "intraburst":
@@ -641,10 +688,13 @@ def asc_desc_ccpc_azi_modulation(
                     [az_wdir_before, az_wdir_sel_desc, az_wdir_after]
                 )
 
-                ### mean curve calculation
-                bin_centers, Imacs_mean = mean_curve_calc2(
-                    az_wdir_ext_s1a_asc, imacs_ext_s1a_asc
-                )
+                if azimuth_varname == 'azimuth_varname':
+                    ### mean curve calculation
+                    bin_centers, Imacs_mean,_,_ = mean_curve_calc2(
+                        az_wdir_ext_s1a_asc, imacs_ext_s1a_asc
+                    )
+                else:
+                    bin_centers, Imacs_mean, _, _ = mean_and_std_curve_calc_180_180(az_wdir_ext_s1a_asc, imacs_ext_s1a_asc)
                 ax[i][j].plot(
                     bin_centers,
                     Imacs_mean,
@@ -653,9 +703,12 @@ def asc_desc_ccpc_azi_modulation(
                     linestyle="-",
                     lw=2,
                 )  # plot the mean curve
-                bin_centers, Imacs_mean = mean_curve_calc2(
-                    az_wdir_ext_s1a_desc, imacs_ext_s1a_desc
-                )
+                if azimuth_varname == 'azimuth_varname':
+                    bin_centers, Imacs_mean, _,_ = mean_curve_calc2(
+                        az_wdir_ext_s1a_desc, imacs_ext_s1a_desc
+                    )
+                else:
+                    bin_centers, Imacs_mean, _, _ = mean_and_std_curve_calc_180_180(az_wdir_ext_s1a_desc, imacs_ext_s1a_desc)
                 ax[i][j].plot(
                     bin_centers,
                     Imacs_mean,
@@ -665,29 +718,33 @@ def asc_desc_ccpc_azi_modulation(
                     lw=2,
                 )  # plot the mean curve
 
-            ax[i][j].hlines(0, -70, 420, color="black", lw=1)
-            ax[i][j].vlines(
-                [90, 270],
-                -ymax,
-                ymax,
-                color="teal",
-                linestyles="dashdot",
-                alpha=0.6,
-                lw=2.5,
-            )  # label='crosswind'
-            ax[i][j].vlines(
-                180, -ymax, ymax, color="black", linestyles="dashdot", alpha=0.6, lw=2.5
-            )  # label='downwind',
-            ax[i][j].vlines(
-                [1, 359.9],
-                -ymax,
-                ymax,
-                color="maroon",
-                linestyles="dashdot",
-                alpha=0.6,
-                lw=3,
-            )  #  label='upwind'
-            ax[i][j].set_xticks([0, 90, 180, 270, 360])
+            if azimuth_varname == 'azimuth_varname':
+                ax[i][j].hlines(0, -70, 420, color="black", lw=1)
+                ax[i][j].vlines(
+                    [90, 270],
+                    -ymax,
+                    ymax,
+                    color="teal",
+                    linestyles="dashdot",
+                    alpha=0.6,
+                    lw=2.5,
+                )  # label='crosswind'
+                ax[i][j].vlines(
+                    180, -ymax, ymax, color="black", linestyles="dashdot", alpha=0.6, lw=2.5
+                )  # label='downwind',
+                ax[i][j].vlines(
+                    [1, 359.9],
+                    -ymax,
+                    ymax,
+                    color="maroon",
+                    linestyles="dashdot",
+                    alpha=0.6,
+                    lw=3,
+                )  #  label='upwind'
+                ax[i][j].set_xticks([0, 90, 180, 270, 360])
+            else:
+                ax[i][j].set_xticks([-180,-90,0, 90, 180])
+                ax[i][j].axhline(0,color='k')
             ax[i][j].tick_params(axis="x", labelsize=15)
             ax[i][j].tick_params(axis="y", labelsize=15)
             ax[i][j].set_xlim(xmin, xmax)
@@ -702,16 +759,17 @@ def asc_desc_ccpc_azi_modulation(
                 ax[i][j].set_ylabel("")
             ax[i][j].grid(linestyle="--", color="gray", alpha=0.9)
             ax[i][j].legend(fontsize=12, loc="upper right")
-            txt_str = (
-                "S1A$_{asc}$ pts num: %d \nS1A$_{desc}$ pts num: %d \nS1B$_{asc}$ pts num: %d \nS1B$_{desc}$ pts num: %d \nwind : %d $\pm$ 2 m/s \nincidence : %.1f $\pm$ 1° (IW1)"
-                % (
+            wind_part = r'wind : %d $\pm$ 2 m/s '%((i + 1) * 5)
+            inc_part = r'incidence : %.1f $\pm$ 1°'%chosen_mean_iangle[j]
+            numer_part = "S1A$_{asc}$ pts num: %d \nS1A$_{desc}$ pts num: %d \nS1B$_{asc}$ pts num: %d \nS1B$_{desc}$ pts num: %d \n" % (
                     nb_pts["S1A_ascen"],
                     nb_pts["S1A_descen"],
                     nb_pts["S1B_ascen"],
                     nb_pts["S1B_descen"],
-                    (i + 1) * 5,
-                    chosen_mean_iangle[j],
                 )
+            txt_str = (
+                numer_part+wind_part+'\n'+inc_part+subswath
+
             )
             props = dict(boxstyle="square", facecolor="white")
             ax[i][j].text(
@@ -724,8 +782,8 @@ def asc_desc_ccpc_azi_modulation(
                 bbox=props,
             )
     fig.suptitle(
-        "S1A & S1B comparison of mean CCPC %s part versus azimuth wind direction | Processing B07 \n%s subswath | %s"
-        % (part, subswath.upper(), burstkind),
+        "S1A & S1B comparison of mean CCPC %s part versus azimuth wind direction | Processing B07 \n%s subswath | %s %s"
+        % (part, subswath.upper(), burstkind,azimuth_varname),
         y=0.93,
         fontsize=25,
     )
@@ -736,7 +794,7 @@ def asc_desc_ccpc_azi_modulation(
     # fig.savefig('/home1/datahome/ljessel/Plots/MACS_analysis/IW_SLC_L1C_B07/intra/comp_S1AB/IMACS_comp_s1ab_ascdesc_iw1_inter.png')
     fig.show()
 
-def hist2d_ccpc_re_wsp_wdir(df):
+def hist2d_ccpc_re_wsp_wdir(df,azimuth_varname='wdir_az_scat',burstkind='intraburst',polarization='vv',productid='B07'):
     """
     inspired by a figure produce by Aurelien Colin CLS
     :param df:
@@ -770,7 +828,7 @@ def hist2d_ccpc_re_wsp_wdir(df):
     wsp_bins = np.arange(0,25,0.7)
     wdir_bins = np.arange(0,360,10)
     plt.figure(figsize=(7,6),dpi=120)
-    points = (df['Wspeed'].values,df['wdir_az'].values)
+    points = (df['Wspeed'].values,df[azimuth_varname].values)
     values = df['CCPC_filt_Re'].values
     grid_x,grid_y = np.meshgrid(wsp_bins,wdir_bins)
     grid_z0 = griddata(points, values, (grid_x, grid_y), method='nearest')
@@ -781,7 +839,7 @@ def hist2d_ccpc_re_wsp_wdir(df):
     ax.xaxis.tick_top()
     cb = plt.colorbar(orientation='horizontal')
     cb.set_label('CCPC real part []')
-    plt.title('IW XSP L1C B07 vv intraburst | all subswaths | all incidences')
+    plt.title('IW XSP L1C product %s %s %s | all subswaths | all incidences'%(productid,polarization,burstkind))
     plt.xlabel('wind speed ECMWF [m/s]')
     plt.ylabel('azimuthtal wind direction [°]')
     plt.gca().invert_yaxis()
