@@ -609,7 +609,7 @@ def macs_per_subswath_per_windspeed(df,satellite='S1A+B',part='Re',burstkind='in
 
 
 def macs_az_windspeed_inc_recap(df,satellite='S1A+B',part='Re',burstkind='intraburst',polarization='vv',lambda_val='50',ymax=0.4):
-    fig, ax = plt.subplots(1, 4, figsize=(60, 12))
+    fig, ax = plt.subplots(1, 4, figsize=(30, 8),dpi=220)
     varname = 'macs_%s_lambda_max=%s' % (part, float(lambda_val))
     #ymin = -0.04
     #ymax = 0.04
@@ -617,7 +617,17 @@ def macs_az_windspeed_inc_recap(df,satellite='S1A+B',part='Re',burstkind='intrab
     xmin = 0
     xmax = 360
     mean_iangle_s1_sel = mean_iangle[::2]
-
+    mean_iangle_s1_sel = np.array([32,36,39,42])
+    colors = ['#1f77b4',  # Blue
+    '#ff7f0e',  # Orange
+    '#2ca02c',  # Green
+    '#d62728',  # Red
+    '#9467bd',  # Purple
+    '#8c564b',  # Brown
+    '#e377c2',  # Pink
+    '#7f7f7f',  # Gray
+    '#bcbd22',  # Olive
+    '#17becf']  # Cyan
     wnd_spd_5ms = df["Wspeed"][(df["Wspeed"] > 3) & (df["Wspeed"] < 7)]
     wnd_spd_10ms = df["Wspeed"][(df["Wspeed"] > 8) & (df["Wspeed"] < 12)]
     wnd_spd_15ms = df["Wspeed"][(df["Wspeed"] > 13) & (df["Wspeed"] < 17)]
@@ -637,7 +647,8 @@ def macs_az_windspeed_inc_recap(df,satellite='S1A+B',part='Re',burstkind='intrab
         df[varname].loc[wnd_spd_20ms.index],
     ]
 
-
+    all_imacs_mean = {}
+    all_imacs_median = {}
     for i in range(4): # loop over the wind speed ranges
         for iangle in mean_iangle_s1_sel:
             ### Selection of S1 data ###
@@ -672,11 +683,12 @@ def macs_az_windspeed_inc_recap(df,satellite='S1A+B',part='Re',burstkind='intrab
                                                                              variabletested=Imacs_sel_s1)
             ax[i].plot(bin_centers, Imacs_mean, label=r'inc: %.1f $\pm$ 1°' % (iangle), linestyle='-',
                        lw=2)  # plot the mean curve
+            all_imacs_mean['ws%s_inc%s'%(((i+1)*5),iangle)] = Imacs_mean
 
         ax[i].hlines(0, -70, 420, color='black', lw=2)
-        ax[i].vlines([90, 270], -ymax, ymax, color='teal', label='crosswind', linestyles='dashdot', alpha=0.6, lw=2.5)
-        ax[i].vlines(180, -ymax, ymax, color='black', label='downwind', linestyles='dashdot', alpha=0.6, lw=2.5)
-        ax[i].vlines([1, 359.9], -ymax, ymax, color='maroon', label='upwind', linestyles="dashdot", alpha=0.6, lw=3)
+        ax[i].vlines([90, 270], -ymax, ymax, color='teal', linestyles='dashdot', alpha=0.6, lw=2.5) #crosswind
+        ax[i].vlines(180, -ymax, ymax, color='black', linestyles='dashdot', alpha=0.6, lw=2.5) #downwind
+        ax[i].vlines([1, 359.9], -ymax, ymax, color='maroon',  linestyles="dashdot", alpha=0.6, lw=3) #upwind
         ax[i].set_xticks([0, 90, 180, 270, 360])
         ax[i].tick_params(axis='x', labelsize=25)
         ax[i].tick_params(axis='y', labelsize=25)
@@ -690,7 +702,8 @@ def macs_az_windspeed_inc_recap(df,satellite='S1A+B',part='Re',burstkind='intrab
         ax[i].grid(linestyle='--', color='gray', alpha=0.9)
         ax[i].legend(fontsize=22, loc='lower center', ncols=3)
         ax[i].set_title(r'wind speed = %.1f $\pm$ 2 m/s | %d points' % ((i + 1) * 5, len(macs_s1[i])),
-                        fontsize=25)
-    fig.suptitle(satellite+' IMACS versus azimuthal wind direction | wind speed dependency \n %s %s'%(burstkind,polarization), fontsize=35)
+                        fontsize=18)
+    fig.suptitle(satellite+' IMACS versus azimuthal wind direction | wind speed dependency \n %s %s'%(burstkind,polarization), fontsize=20)
     # fig.savefig('/home1/datahome/ljessel/Plots/MACS_analysis/IW_SLC_L1C_B07/intra/S1A&B//IMACSvsAZ_wspd_filt_s1ab_allIW_intra.png')
-    fig.show()
+    #fig.show()
+    return fig,ax,mean_iangle_s1_sel,colors,all_imacs_mean

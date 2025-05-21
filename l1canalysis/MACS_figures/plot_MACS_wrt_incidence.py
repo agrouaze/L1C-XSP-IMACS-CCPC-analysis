@@ -132,7 +132,7 @@ def macs_wrt_incidence_up_down_cross_wind(df,satellite='S1A+B',part='Re',burstki
         txt_str = 'S1 pts num: %d \nazimuth : \n' % (
         len(macs_Im_s1[az_down_tot[i].index]))+lastpart
         props = dict(boxstyle='square', facecolor='white')
-        ax[1][i].text(0.03, 0.97, txt_str, transform=ax[1][i].transAxes, fontsize=12, verticalalignment='top',
+        ax[1][i].text(0.03, 0.2, txt_str, transform=ax[1][i].transAxes, fontsize=12, verticalalignment='top',
                       bbox=props)
         ax[1][i].legend()
 
@@ -182,13 +182,15 @@ def macs_wrt_incidence_up_down_cross_wind(df,satellite='S1A+B',part='Re',burstki
         txt_str = 'S1 pts num: %d \nazimuth : \n' % (
             len(macs_Im_s1[az_cross_tot[i].index]))+lastpart
         props = dict(boxstyle='square', facecolor='white')
-        ax[2][i].text(0.03, 0.97, txt_str, transform=ax[2][i].transAxes, fontsize=12, verticalalignment='top',
+        # original position 0.03, 0.97
+        ax[2][i].text(0.03, 0.2, txt_str, transform=ax[2][i].transAxes, fontsize=12, verticalalignment='top',
                       bbox=props)
         ax[2][i].legend()
     tit = satellite+'IMACS versus incidence angle | wind speed dependency | %s %s'%(burstkind,polarization)
     fig.suptitle(tit, fontsize=15)
     # fig.savefig('/home1/datahome/ljessel/Plots/MACS_analysis/s1ab_IMACS_iangle_wnd_filter_az.png')
-    fig.show()
+    #fig.show()
+    return fig,ax
 
 def macs_wrt_incidence_recap(df,satellite='S1A+B',part='Re',burstkind='intraburst',polarization='vv',lambda_val='50',ymax=0.4):
     #ymin = -0.01

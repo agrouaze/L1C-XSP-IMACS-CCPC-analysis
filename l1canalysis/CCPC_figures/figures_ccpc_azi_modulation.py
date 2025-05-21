@@ -425,12 +425,15 @@ def longepe_azi_figure_asc_desc(df, burstkind="intraburst"):
     fig.show()
 
 
-def longepe_azi_figure(df, burstkind="intraburst",azimuth_varname='wdir_az_scat',ccpc_method='uncalibrated'):
+def longepe_azi_figure(df, burstkind="intraburst",azimuth_varname='wdir_az_scat',ccpc_method='uncalibrated',
+                       windpeeds = np.arange(2, 16, 2),delta_ws = 2 ):
     """
 
     :param df: pandas.DataFrame S1A+S1B
     :param burstkind: str intraburst or interburst
     :param azimuth_varname: str
+    :param windpeeds: np.ndarray of wind speed value for which the obs are selected [m/s]
+    :param delta_ws: float [m/s]
     :return:
     """
     ccpc_methods = {
@@ -464,7 +467,7 @@ def longepe_azi_figure(df, burstkind="intraburst",azimuth_varname='wdir_az_scat'
         xmin = 0
         xmax = 360
     nb_pts = {}
-    windpeeds = np.arange(2, 16, 2)
+    # windpeeds = np.arange(2, 16, 2)
     windspeed_colors = ['b','g','r','c','m','y','k']
     incidences = [34.5,38.5,42.5]
     variables = {
@@ -486,7 +489,6 @@ def longepe_azi_figure(df, burstkind="intraburst",azimuth_varname='wdir_az_scat'
     values_ccpc = {'Amplitude': abs(df[varname_re]+1j*df[varname_im]), # TO BE CHECKED wrt paper
                    'Re':df[varname_re],
                    'Im':df[varname_im],}
-    delta_ws = 2 #m/s
     delta_inc = 1 # degree
     for i,var_x in enumerate(variables):
         for j in range(len(incidences)):  # "loop over the incidence angles
@@ -563,7 +565,13 @@ def longepe_azi_figure(df, burstkind="intraburst",azimuth_varname='wdir_az_scat'
     print("Ploting time :", end_time - start_time, "s")
 
     # fig.savefig('/home1/datahome/ljessel/Plots/MACS_analysis/IW_SLC_L1C_B07/intra/comp_S1AB/IMACS_comp_s1ab_ascdesc_iw1_inter.png')
-    fig.show()
+    #fig.show()
+    # print('fig',fig)
+    # print('ax',ax)
+    # print('windspeed_colors',windspeed_colors)
+    # print('incidences',incidences)
+    # print('windpeeds',windpeeds)
+    return fig,ax,windspeed_colors,incidences,windpeeds
 
 
 def asc_desc_ccpc_azi_modulation(
