@@ -18,7 +18,7 @@ def find_mean_incidence_angle(peaks, gap=0.4) :
         end_peak = peaks[i+1]
         temp_val.append(init_peak)
         if end_peak - init_peak > gap :     # if the gap between 2 incidence angles is higher than 0.4°
-            mean_inc_ang.append(np.mean(temp_val))  # then we mean all the values contained before in temp_val
+            mean_inc_ang.append(float(np.mean(temp_val)))  # then we mean all the values contained before in temp_val
             temp_val = []                   # we reset the temp_val list   
-
+    mean_inc_ang = np.array(mean_inc_ang)
     return mean_inc_ang

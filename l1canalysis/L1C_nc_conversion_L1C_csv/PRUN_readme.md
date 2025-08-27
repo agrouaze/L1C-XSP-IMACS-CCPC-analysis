@@ -10,7 +10,7 @@ Lancer un job PRUN pour génération de dataframe à partir de fichiers Sentinel
 3. Configurer le fichier 'convert_l1c.pbs' où il faut mettre l'environnement nécessaire au fonctionnement du script python, et spécifier la ressource (temps, RAM) (appelle le fichier 'convert_l1c.py').
 
 
-4. rentre le script exécutable : 'chmod +x /home1/datahome/toto/my_awsome_script.pbs'
+4. rendre le script exécutable : 'chmod +x /home1/datahome/toto/my_awsome_script.pbs'
 
 
 5. Configurer le fichier 'exe_convert_l1c_bash' (appelle convert_l1c.pbs et le listing): changer le nom du job PRUN et le chemin vers le listing
